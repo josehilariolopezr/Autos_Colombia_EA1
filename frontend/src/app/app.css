@@ -1,0 +1,50 @@
+:host { display: block; min-height: 100vh; }
+.app-shell { min-height: 100vh; display: flex; background: #f3f6f9; color: #14223b; font-family: 'Manrope', 'Segoe UI', Arial, sans-serif; }
+.sidebar { width: 248px; min-height: 100vh; position: fixed; inset: 0 auto 0 0; z-index: 20; display: flex; flex-direction: column; background: #0c2340; color: #fff; padding: 28px 16px 20px; }
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 10px 34px; color: inherit; text-decoration: none; }
+.brand-icon { width: 46px; height: 46px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; background: #fff; border-radius: 12px; box-shadow: 0 4px 14px #020e1d38; }
+.brand-icon img { width: 40px; height: 40px; object-fit: contain; }
+.brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-copy strong { font-size: 15px; letter-spacing: -.3px; white-space: nowrap; }
+.brand-copy small { margin-top: 5px; color: #8fa4bc; font-size: 7px; text-transform: uppercase; letter-spacing: .75px; font-weight: 700; white-space: nowrap; }
+.main-nav { display: flex; flex-direction: column; gap: 5px; }
+.nav-caption { padding: 0 13px 8px; color: #607997; font-size: 10px; letter-spacing: 1.4px; font-weight: 800; }
+.nav-caption-spaced { margin-top: 23px; }
+.nav-item { border: 0; color: #a8b8ca; background: transparent; border-radius: 9px; display: flex; align-items: center; gap: 12px; padding: 11px 13px; text-align: left; font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; transition: .2s ease; }
+.nav-item svg { width: 19px; height: 19px; flex: 0 0 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nav-item:hover { color: #fff; background: #ffffff0f; }
+.nav-item.active { color: #fff; background: #173b63; box-shadow: inset 3px 0 0 #0e9f6e; }
+.nav-item.active svg { color: #42d0a1; }
+.nav-item.unavailable { opacity: .75; cursor: default; }
+.sidebar-footer { margin-top: auto; border-top: 1px solid #ffffff17; padding-top: 18px; }
+.operator-card { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 6px 5px; }
+.avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: #083e31; background: #a7ead4; font-size: 11px; font-weight: 800; }
+.operator-copy { display: flex; flex-direction: column; min-width: 0; }
+.operator-copy strong { font-size: 11px; white-space: nowrap; }
+.operator-copy small { margin-top: 3px; color: #8095ad; font-size: 9px; }
+.operator-card>svg { display: none; }
+.content-shell { margin-left: 248px; width: calc(100% - 248px); min-width: 0; }
+.topbar { height: 76px; padding: 0 34px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #e3e9ef; }
+.location-block { display: flex; flex-direction: column; gap: 5px; }
+.eyebrow { color: #8997a8; font-size: 9px; line-height: 1; letter-spacing: 1.25px; font-weight: 800; }
+.location-block strong { color: #0c2340; font-size: 13px; }
+.header-actions { display: flex; align-items: center; gap: 20px; }
+.connection-status,.date-time { display: flex; align-items: center; gap: 9px; }
+.connection-status { padding-right: 20px; border-right: 1px solid #e3e9ef; color: #3f5065; font-size: 10px; }
+.connection-status.demo-status { color: #8a5a00; font-weight: 800; }
+.connection-status.demo-status .status-dot { background: #e9a72c; box-shadow: 0 0 0 4px #fff2d6; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #0e9f6e; box-shadow: 0 0 0 4px #dcf7ee; }
+.date-time { display: grid; grid-template-columns: 18px auto; column-gap: 9px; }
+.date-time svg { grid-column: 1; grid-row: 1 / 3; width: 18px; fill: none; stroke: #8190a2; stroke-width: 1.5; }
+.date-time span,.date-time strong { color: #3f5065; font-size: 10px; text-transform: capitalize; }
+.date-time strong { margin-top: 2px; color: #7c899a; font-weight: 600; }
+.icon-button { position: relative; width: 37px; height: 37px; display: grid; place-items: center; border: 1px solid #e1e7ec; border-radius: 9px; color: #6c7b8f; background: #fff; }
+.icon-button svg { width: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.notification i { position: absolute; width: 5px; height: 5px; top: 7px; right: 8px; background: #e65353; border: 1px solid #fff; border-radius: 50%; }
+.primary-button { min-height: 39px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 15px; border: 0; border-radius: 9px; color: #fff; background: #0e9f6e; box-shadow: 0 4px 10px #0e9f6e26; text-decoration: none; font-size: 11px; font-weight: 700; }
+.primary-button:hover { background: #087a55; }
+.primary-button svg { width: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+main { min-width: 0; }
+.mobile-menu { display: none; }
+@media (max-width: 1200px) { .sidebar { width: 74px; padding: 25px 10px; } .brand { justify-content: center; padding: 0 7px 32px; } .brand-copy,.nav-caption,.nav-item span,.sidebar-footer { display: none; } .nav-item { justify-content: center; padding: 12px; } .content-shell { margin-left: 74px; width: calc(100% - 74px); } .topbar { padding: 0 22px; } .connection-status { display: none; } }
+@media (max-width: 680px) { .sidebar { display: none; } .content-shell { margin: 0; width: 100%; } .topbar { height: 66px; padding: 0 16px; } .mobile-menu { position: relative; display: block; } .mobile-menu summary { display: grid; width: 34px; height: 34px; place-items: center; list-style: none; border: 1px solid #e1e7ec; border-radius: 8px; color: #526175; background: white; cursor: pointer; } .mobile-menu summary::-webkit-details-marker { display: none; } .mobile-menu summary svg { width: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; } .mobile-menu nav { position: absolute; z-index: 30; top: 42px; left: 0; display: grid; min-width: 185px; padding: 6px; border: 1px solid #e3e9ef; border-radius: 9px; background: white; box-shadow: 0 8px 24px #1228401a; } .mobile-menu nav a { padding: 10px; color: #526175; border-radius: 6px; text-decoration: none; font-size: 12px; } .date-time { display: none; } .header-cta { min-height: 36px; padding: 0 10px; font-size: 0; } .header-cta svg { width: 19px; } .header-actions { gap: 9px; } }

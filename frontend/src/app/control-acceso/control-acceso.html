@@ -1,0 +1,81 @@
+@if (demoMode) {
+<main class="exit-page">
+  <header class="exit-heading"><div><span class="eyebrow">CONTROL DE SALIDAS</span><h1>Registrar salida</h1><p>Busca el vehículo y finaliza su estancia.</p></div></header>
+  @if (demoFinished()) { <div class="demo-success" role="status">Salida registrada en la demostración local. Ningún dato fue enviado ni guardado.</div> }
+  <div class="exit-layout">
+    <div class="exit-main">
+      <section class="exit-card lookup"><label for="vehicle-search">Buscar vehículo activo</label><div class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="vehicle-search" [value]="demoQuery()" (input)="demoQuery.set($any($event.target).value.toUpperCase())" placeholder="Número de placa o código de celda"/><kbd>⌘ K</kbd></div><small>21 vehículos se encuentran actualmente en el parqueadero</small></section>
+      <section class="exit-card vehicle-card"><div class="vehicle-head"><span class="car-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 17-1-1v-4l2-5h12l2 5v4l-1 1M5 12h14M7 17v2m10-2v2"/></svg></span><div><span class="eyebrow">VEHÍCULO SELECCIONADO</span><h2>{{ demoQuery() || 'JTR-428' }}</h2><p>Renault Logan · Gris plata</p></div><span class="active-pill"><i></i>Estancia activa</span></div><div class="vehicle-facts"><div><span>◷ &nbsp; Hora de entrada</span><strong>8:24 a. m.</strong><small>Hoy, 18 de junio</small></div><div><span>◷ &nbsp; Duración</span><strong>3 h 42 min</strong><small>Tiempo calculado</small></div><div><span>▣ &nbsp; Celda asignada</span><strong>A-01</strong><small>Zona A · Carros</small></div><div><span>♙ &nbsp; Operador ingreso</span><strong>OP-084</strong><small>Andrés Molina</small></div></div><div class="entry-note">✓ &nbsp; Ingreso sin novedades <small>Registro #EST-20250618-0428</small></div></section>
+    </div>
+    <aside class="exit-card payment-card"><div class="payment-title"><span class="receipt-icon">▤</span><div><h2>Resumen de pago</h2><p>Detalle de la estancia</p></div></div><div class="payment-lines"><div><span>Tarifa base</span><b>$4.500 / hora</b></div><div><span>Tiempo facturado</span><b>4 horas</b></div><div><span>Subtotal</span><b>$18.000</b></div><div><span>Descuentos</span><b class="green-text">-$0</b></div></div><section class="total-box"><span>Total a pagar</span><strong>$18.000</strong><small>IVA incluido</small></section><label class="method-label">Método de pago</label><div class="payment-methods">@for (method of ['Efectivo','Tarjeta','Transferencia']; track method) {<button type="button" [class.chosen]="demoPayment() === method" (click)="demoPayment.set($any(method))"><strong>{{ method === 'Efectivo' ? '▣' : method === 'Tarjeta' ? '▤' : '⇄' }}</strong>{{ method }}<i></i></button>}</div><button class="confirm-exit" type="button" (click)="demoFinished.set(true)" [disabled]="demoFinished()">▤ &nbsp; Registrar salida y generar recibo</button><button class="incident-button" type="button">⚠ &nbsp; Registrar novedad</button><small class="release-note">La celda A-01 quedará disponible al confirmar.</small></aside>
+  </div>
+</main>
+} @else {
+<main class="exit-page">
+  <header class="exit-heading"><div><span class="eyebrow">CONTROL DE SALIDAS</span><h1>Registrar salida</h1><p>Busca el vehículo y consulta los datos de su estancia y propietario.</p></div></header>
+  @if (catalogError()) { <p class="notice error" role="alert">{{ catalogError() }} <button type="button" (click)="cargarCatalogos()">Reintentar</button></p> }
+  @if (exitoSalida()) { <p class="notice success" role="status">{{ exitoSalida() }}</p> }
+  <div class="exit-layout">
+    <div class="exit-main">
+      <section class="exit-card lookup">
+        <label for="query-plate">Buscar vehículo activo</label>
+        <form class="search-box" [formGroup]="consulta" (ngSubmit)="buscar()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg>
+          <input id="query-plate" type="search" formControlName="placa" placeholder="Número de placa" />
+          <button type="submit" [disabled]="busy()">{{ querying() ? 'Buscando…' : 'Buscar' }}</button>
+        </form>
+        @if (consulta.controls.placa.touched && consulta.controls.placa.invalid) { <small class="field-error">Escribe una placa para consultar.</small> }
+        @if (errorConsulta()) { <p class="notice error" role="alert">{{ errorConsulta() }}</p> }
+        @if (querying()) { <small role="status">Consultando datos del vehículo…</small> }
+        @else if (!estado()) { <small>Selecciona un vehículo ocupado en Vista general o busca una placa registrada.</small> }
+      </section>
+      @if (estado(); as state) {
+        <section class="exit-card vehicle-card">
+          <div class="vehicle-head">
+            <span class="car-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 17-1-1v-4l2-5h12l2 5v4l-1 1M5 12h14M7 17v2m10-2v2"/></svg></span>
+            <div><span class="eyebrow">VEHÍCULO SELECCIONADO</span><h2>{{ state.vehiculo.placa }}</h2><p>{{ state.vehiculo.marca }} {{ state.vehiculo.modelo }} · {{ state.vehiculo.color }}</p></div>
+            <span class="active-pill"><i></i>{{ state.esta_dentro ? 'Estancia activa' : 'Fuera del parqueadero' }}</span>
+          </div>
+          <div class="vehicle-facts">
+            <div><span>Tipo de vehículo</span><strong>{{ state.vehiculo.tipo }}</strong><small>Placa {{ state.vehiculo.placa }}</small></div>
+            @if (state.estancia; as stay) {
+              <div><span>Hora de entrada</span><strong>{{ hora(stay.entrada) }}</strong><small>{{ fechaCorta(stay.entrada) }} · Bogotá</small></div>
+              <div><span>Duración</span><strong>{{ duracion(stay.entrada) }}</strong><small>Tiempo transcurrido</small></div>
+              <div><span>Celda asignada</span><strong>{{ stay.celda.codigo }}</strong><small>Zona {{ stay.celda.codigo.split('-')[0] }} · {{ stay.celda.tipo }}</small></div>
+              <div><span>Operador de ingreso</span><strong>{{ stay.operador_entrada.nombre }}</strong><small>OP-{{ stay.operador_entrada.id.toString().padStart(3, '0') }} · {{ stay.operador_entrada.telefono }}</small></div>
+            }
+          </div>
+          <div class="owner-details">
+            @if (state.vehiculo.cliente; as owner) {
+              <span class="owner-avatar">{{ iniciales(owner.nombre) }}</span>
+              <div><span class="eyebrow">PROPIETARIO · {{ owner.codigo }}</span><strong>{{ owner.nombre }}</strong><small>{{ owner.telefono }} · @if (owner.vencimiento) {Mensualidad hasta {{ fechaCorta(owner.vencimiento) }} } @else {Sin mensualidad registrada}</small></div>
+            } @else { <div><span class="eyebrow">PROPIETARIO</span><strong>No hay cliente asociado a esta placa.</strong><small>Vincula el vehículo con un cliente desde la gestión.</small></div> }
+          </div>
+          @if (state.estancia) { <div class="entry-note"><span>✓ &nbsp; Ingreso registrado en PostgreSQL</span><small>Estancia #{{ state.estancia.id }}</small></div> }
+        </section>
+      }
+    </div>
+    <aside class="exit-card payment-card">
+      <div class="payment-title"><span class="receipt-icon">♙</span><div><h2>Propietario y salida</h2><p>Información desde el registro del cliente</p></div></div>
+      @if (estado(); as state) {
+        @if (state.vehiculo.cliente; as owner) { <div class="owner-summary"><strong>{{ owner.nombre }}</strong><span>{{ owner.codigo }}</span><a [href]="'tel:' + owner.telefono">{{ owner.telefono }}</a></div> }
+        @else { <p class="hint">Este vehículo todavía no tiene un cliente asociado.</p> }
+      } @else { <p class="hint">Al consultar una placa aparecerá aquí el contacto del propietario.</p> }
+      <label class="method-label" for="exit-operator">Operador que registra la salida</label>
+      <select id="exit-operator" [formControl]="consulta.controls.operador_id"><option [ngValue]="null">Selecciona un operador</option>@for (operator of operadores(); track operator.id) { <option [ngValue]="operator.id">{{ operator.nombre }} · OP-{{ operator.id.toString().padStart(3, '0') }}</option> }</select>
+      @if (consulta.controls.operador_id.touched && consulta.controls.operador_id.invalid) { <small class="field-error">Selecciona el operador para continuar.</small> }
+      <button class="confirm-exit" type="button" (click)="registrarSalida()" [disabled]="busy() || catalogLoading() || !estado()?.esta_dentro">Registrar salida</button>
+      <small class="release-note">La salida se guarda en PostgreSQL y libera la celda.</small>
+      @if (saving()) { <p role="status">Guardando salida…</p> }
+    </aside>
+  </div>
+  <details class="entry-form-details"><summary>Registrar ingreso de un vehículo</summary>
+    <form [formGroup]="entrada" (ngSubmit)="registrarEntrada()"><div class="form-grid">
+      <div class="field"><label for="entry-plate">Placa</label><input id="entry-plate" formControlName="placa" /></div>
+      <div class="field"><label for="entry-cell">Celda</label><select id="entry-cell" formControlName="celda_id"><option [ngValue]="null">Selecciona una celda</option>@for (cell of celdas(); track cell.id) { <option [ngValue]="cell.id">{{ cell.codigo }} · {{ cell.tipo }}</option> }</select></div>
+      <div class="field"><label for="entry-operator">Operador</label><select id="entry-operator" formControlName="operador_id"><option [ngValue]="null">Selecciona un operador</option>@for (operator of operadores(); track operator.id) { <option [ngValue]="operator.id">{{ operator.nombre }}</option> }</select></div>
+    </div><button class="confirm-exit" type="submit" [disabled]="busy() || catalogLoading()">Registrar ingreso</button></form>
+    @if (errorEntrada()) { <p class="notice error" role="alert">{{ errorEntrada() }}</p> } @if (exitoEntrada()) { <p class="notice success" role="status">{{ exitoEntrada() }}</p> }
+  </details>
+</main>
+}

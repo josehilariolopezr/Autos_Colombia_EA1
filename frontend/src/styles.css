@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f3f6f9;
+  color: #14223b;
+  font-family: 'Manrope', 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a:focus-visible {
+  outline: 3px solid #94610e;
+  outline-offset: 6px;
+}
+
+.exit-page .search-box {
+  gap: 10px;
+}
+.exit-page .search-box button {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #0e9f6e;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.exit-page .search-box button:disabled { opacity: .55; cursor: wait; }
+.exit-page .vehicle-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 18px; }
+.exit-page .vehicle-facts > div:nth-child(3) { padding-left: 17px; border-left: 1px solid #e4eaf0; }
+.exit-page .owner-details { display: flex; align-items: center; gap: 12px; margin: 0 20px 18px; padding: 14px; border: 1px solid #e0eee8; border-radius: 8px; background: #f5faf8; }
+.exit-page .owner-avatar { display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 10px; background: #d9f3e9; color: #087e59; font-size: 12px; font-weight: 800; }
+.exit-page .owner-details > div { display: grid; gap: 4px; }
+.exit-page .owner-details strong { color: #102846; font-size: 13px; }
+.exit-page .owner-details small, .exit-page .owner-summary span, .exit-page .owner-summary a { color: #8797aa; font-size: 10px; }
+.exit-page .owner-summary { display: grid; gap: 7px; padding: 19px 0; border-bottom: 1px solid #e8edf1; }
+.exit-page .owner-summary strong { color: #102846; font-size: 15px; }
+.exit-page .owner-summary a { color: #316da8; }
+.exit-page .payment-card select { width: 100%; padding: 10px; border: 1px solid #dce5ec; border-radius: 7px; background: #fff; color: #21364e; font: inherit; font-size: 11px; }
+.exit-page .entry-form-details { margin-top: 22px; padding: 17px 20px; border: 1px solid #dfe7ee; border-radius: 10px; background: #fff; color: #102846; }
+.exit-page .entry-form-details summary { font-size: 12px; font-weight: 700; cursor: pointer; }
+.exit-page .entry-form-details[open] form { padding-top: 12px; }
+.exit-page .entry-form-details .form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 15px 0; }
+.exit-page .entry-form-details .field label { font-size: 11px; }
+.exit-page .entry-form-details .field input, .exit-page .entry-form-details .field select { font-size: 12px; }
+.exit-page .entry-form-details .confirm-exit { max-width: 240px; }
+.exit-page .field-error { font-size: 10px; color: #bd4646; }
+.exit-page .payment-card .hint { color: #8797aa; font-size: 11px; }
+@media (max-width: 600px) {
+  .exit-page .vehicle-facts { grid-template-columns: 1fr; }
+  .exit-page .vehicle-facts > div, .exit-page .vehicle-facts > div:nth-child(3) { padding-left: 0; border: 0; }
+  .exit-page .entry-form-details .form-grid { grid-template-columns: 1fr; }
+  .exit-page .owner-details { margin-inline: 14px; }
+}
+

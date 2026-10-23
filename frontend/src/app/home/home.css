@@ -1,0 +1,62 @@
+:host { display: block; }
+.page { position: relative; isolation: isolate; min-height: calc(100vh - 76px); max-width: 1510px; margin: 0 auto; padding: 30px 34px 38px; }
+.page::before { position: absolute; z-index: -1; inset: 0; pointer-events: none; content: ''; background: url('/autos-colombia-watermark.png') center 30% / 450px auto no-repeat; opacity: .08; }
+.page-heading { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
+.overline { color: #8997a8; font-size: 9px; line-height: 1; letter-spacing: 1.25px; font-weight: 800; }
+.page-heading h1 { margin: 7px 0 6px; color: #0c2340; font-size: 25px; line-height: 1.15; letter-spacing: -.65px; font-weight: 800; }
+.page-heading p { margin: 0; color: #708096; font-size: 12px; }
+.mobile-entry { display: none; }
+.kpi-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
+.kpi-card { display: flex; align-items: center; gap: 14px; min-width: 0; min-height: 115px; padding: 20px; background: #fff; border: 1px solid #e6ebf0; border-radius: 12px; box-shadow: 0 2px 4px #152b4405; }
+.kpi-icon { display: grid; flex: 0 0 42px; place-items: center; width: 42px; height: 42px; border-radius: 10px; }
+.kpi-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kpi-icon.blue { color: #336da8; background: #eaf2fb; }.kpi-icon.red { color: #d65050; background: #fceced; }.kpi-icon.amber { color: #c88721; background: #fdf3df; }.kpi-icon.green { color: #0e9f6e; background: #e3f7f0; }
+.kpi-content { display: flex; flex-direction: column; min-width: 0; }
+.kpi-content>span { color: #718095; font-size: 10px; font-weight: 600; white-space: nowrap; }
+.kpi-content>strong { overflow: hidden; margin: 4px 0; color: #0c2340; font-size: clamp(17px,1.55vw,22px); letter-spacing: -.4px; text-overflow: ellipsis; white-space: nowrap; }
+.kpi-content small { color: #8a98a8; font-size: 9px; white-space: nowrap; }
+.kpi-content small b { color: #0e9f6e; font-weight: 800; }.kpi-content small b.neutral { color: #627286; }
+.parking-panel { overflow: hidden; background: #fff; border: 1px solid #e3e9ef; border-radius: 13px; box-shadow: 0 2px 7px #12284006; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 19px 22px 15px; }
+.panel-header h2 { margin: 0; color: #0c2340; font-size: 15px; letter-spacing: -.25px; }
+.panel-header p { margin: 4px 0 0; color: #8794a4; font-size: 10px; }
+.panel-controls { display: flex; gap: 12px; }
+.segmented { display: flex; padding: 3px; background: #f2f5f8; border-radius: 8px; }
+.segmented button { padding: 6px 10px; border: 0; color: #738195; background: transparent; border-radius: 6px; font: inherit; font-size: 9px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.segmented button span { margin-left: 5px; color: #98a4b2; }
+.segmented button.selected { color: #0c2340; background: #fff; box-shadow: 0 1px 4px #12253e1a; }
+.segmented button:disabled { opacity: .5; cursor: not-allowed; }
+.select-wrap { position: relative; width: 145px; }
+.select-wrap select { width: 100%; height: 35px; padding: 0 30px 0 11px; appearance: none; border: 1px solid #e0e6ec; border-radius: 8px; outline: 0; color: #526175; background: #fff; font: inherit; font-size: 9px; font-weight: 600; }
+.select-wrap>svg { position: absolute; top: 10px; right: 10px; width: 14px; fill: none; stroke: #8d99a8; stroke-width: 1.6; pointer-events: none; }
+.legend { display: flex; gap: 17px; padding: 9px 22px; border-top: 1px solid #edf1f4; border-bottom: 1px solid #edf1f4; color: #758397; font-size: 9px; }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.legend i { width: 7px; height: 7px; border-radius: 50%; }
+.free-dot { background: #0e9f6e; }.occupied-dot { background: #df5555; }.subscriber-dot { background: #e3a438; }
+.parking-grid { display: grid; grid-template-columns: repeat(9,minmax(85px,1fr)); gap: 9px; padding: 17px 22px 20px; }
+.spot-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 118px; min-width: 0; overflow: hidden; padding: 12px; border: 1px solid #dce7e2; border-radius: 9px; color: #38586a; background: #fbfdfc; text-align: left; text-decoration: none; transition: transform .2s, box-shadow .2s; }
+.spot-card::after { position: absolute; inset: auto 0 0; height: 3px; content: ''; background: #0e9f6e; opacity: .75; }
+.spot-card:hover { transform: translateY(-2px); box-shadow: 0 5px 13px #0e314d14; }
+.spot-card.occupied { color: #ab5353; background: #fffafa; border-color: #f0dede; }.spot-card.occupied::after { background: #df5555; }
+.spot-card.subscriber { color: #bd8124; background: #fffdf8; border-color: #f0e5cf; }.spot-card.subscriber::after { background: #e3a438; }
+.spot-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.spot-top b { color: #0c2340; font-size: 11px; }
+.spot-state { width: 6px; height: 6px; border-radius: 50%; background: #0e9f6e; }
+.spot-state.occupied { background: #df5555; }.spot-state.subscriber { background: #e3a438; }
+.spot-icon { position: absolute; top: 41px; align-self: center; width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .72; }
+.spot-detail { display: flex; flex-direction: column; max-width: 100%; line-height: 1.1; }
+.spot-detail strong { overflow: hidden; color: #3d5265; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.spot-card.free .spot-detail strong { color: #087a55; }
+.spot-detail small { overflow: hidden; margin-top: 3px; color: #9aa5b1; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+.panel-footer { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 22px; border-top: 1px solid #edf1f4; color: #8a97a7; font-size: 9px; }
+.panel-footer button { display: flex; align-items: center; gap: 6px; border: 0; color: #326d99; background: transparent; font: inherit; font-size: 9px; font-weight: 700; cursor: pointer; }
+.panel-footer button svg { width: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.notice,.empty-state { padding: 24px; color: #708096; background: #fff; border: 1px solid #e3e9ef; border-radius: 10px; font-size: 12px; }
+.notice.demo-notice { margin: -12px 0 20px; padding: 12px 16px; color: #805a16; background: #fff9e9; border-color: #f2dfa9; }
+.notice.error { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #a2473b; background: #fffafa; border-color: #f0d8d4; }
+.notice button { padding: 8px 12px; border: 0; border-radius: 8px; color: #fff; background: #087a55; font: inherit; cursor: pointer; }
+.empty-state a { color: #087a55; font-weight: 700; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@media (max-width: 1200px) { .parking-grid { grid-template-columns: repeat(6,minmax(85px,1fr)); } .kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 920px) { .page { padding: 26px 22px; } .parking-grid { grid-template-columns: repeat(4,minmax(85px,1fr)); } .panel-header { align-items: flex-start; gap: 14px; }.panel-controls { align-items: flex-end; flex-direction: column; } }
+@media (max-width: 680px) { .page { padding: 22px 14px; }.page-heading { align-items: center; }.mobile-entry { display: inline-flex; align-items: center; gap: 4px; padding: 7px 9px; border: 1px solid #dce5eb; border-radius: 8px; color: #0c2340; background: #fff; font-size: 10px; font-weight: 700; text-decoration: none; }.mobile-entry svg { width: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; }.kpi-grid { grid-template-columns: 1fr; }.parking-grid { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 14px; }.panel-header { align-items: stretch; flex-direction: column; }.panel-controls { align-items: stretch; }.segmented { overflow-x: auto; }.segmented button { flex: 1; padding-inline: 7px; }.select-wrap { width: 100%; }.legend { padding-inline: 14px; } }

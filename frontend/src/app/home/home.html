@@ -1,0 +1,45 @@
+<main class="page dashboard" aria-labelledby="dashboard-title">
+  <header class="page-heading">
+    <div>
+      <span class="overline">RESUMEN OPERATIVO</span>
+      <h1 id="dashboard-title">Buenos días, Andrés</h1>
+      <p>Este es el estado actual de tu parqueadero.</p>
+    </div>
+    <a class="mobile-entry" routerLink="/control-acceso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Ingreso</a>
+  </header>
+
+  @if (demoMode()) { <div class="notice demo-notice" role="status">Modo demostración local: cifras y registros de muestra de Figma. No se consultan ni se guardan datos en PostgreSQL.</div> }
+
+  @if (loading()) { <div class="notice" role="status">Cargando el estado del parqueadero…</div> }
+  @else if (error()) { <div class="notice error" role="alert"><span>No pudimos cargar el resumen. Verifica que la API y la base de datos estén disponibles.</span><button type="button" (click)="load()">Reintentar</button></div> }
+  @else if (summary(); as data) {
+    <section class="kpi-grid" aria-label="Indicadores principales">
+      <article class="kpi-card"><span class="kpi-icon blue"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="4"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/></svg></span><span class="kpi-content"><span>Celdas disponibles</span><strong>{{ data.celdas_disponibles }}</strong><small><b>{{ percentAvailable() }}%</b> de {{ data.total_celdas }} celdas</small></span></article>
+      <article class="kpi-card"><span class="kpi-icon red"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 17-1-1v-4l2-5h12l2 5v4l-1 1M5 12h14M7 17v2m10-2v2M7.5 15h.01M16.5 15h.01"/></svg></span><span class="kpi-content"><span>Celdas ocupadas</span><strong>{{ data.celdas_ocupadas }}</strong><small><b class="neutral">{{ data.variacion_ocupadas_24h < 0 ? -data.variacion_ocupadas_24h : data.variacion_ocupadas_24h }}</b> {{ variationText(data.variacion_ocupadas_24h) }}</small></span></article>
+      <article class="kpi-card"><span class="kpi-icon amber"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="kpi-content"><span>Estancias activas</span><strong>{{ data.estancias_activas }}</strong><small>@if (monthlyCount() === null) {Planes mensuales no configurados} @else {<b class="neutral">{{ monthlyCount() }}</b> mensualidades}</small></span></article>
+      <article class="kpi-card"><span class="kpi-icon green"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h16a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V6a3 3 0 0 1 3-3h13"/><path d="M16 11h6v4h-6a2 2 0 0 1 0-4Z"/></svg></span><span class="kpi-content"><span>Recaudación del día</span><strong>{{ currency(data.recaudacion_hoy) }}</strong><small>@if (data.variacion_recaudacion_pct === null) {Pagos no configurados} @else {<b>{{ data.variacion_recaudacion_pct > 0 ? '+' : '' }}{{ data.variacion_recaudacion_pct }}%</b> vs. ayer}</small></span></article>
+    </section>
+
+    <section class="parking-panel" aria-labelledby="map-title">
+      <header class="panel-header"><div><h2 id="map-title">Mapa de celdas</h2><p>Disponibilidad en tiempo real</p></div>
+        <div class="panel-controls"><div class="segmented" aria-label="Filtrar celdas">
+          <button type="button" [class.selected]="filter() === 'TODAS'" (click)="setFilter('TODAS')">Todas <span>{{ data.total_celdas }}</span></button>
+          <button type="button" [class.selected]="filter() === 'LIBRES'" (click)="setFilter('LIBRES')">Libres <span>{{ freeCount() }}</span></button>
+          <button type="button" [class.selected]="filter() === 'OCUPADAS'" (click)="setFilter('OCUPADAS')">Ocupadas <span>{{ occupiedCount() }}</span></button>
+          <button type="button" [disabled]="monthlyCount() === null" [class.selected]="filter() === 'MENSUALIDAD'" (click)="setFilter('MENSUALIDAD')">Mensualidad <span>{{ monthlyCount() ?? '—' }}</span></button>
+        </div><label class="select-wrap"><span class="sr-only">Zona del parqueadero</span><select [value]="zone()" (change)="setZone($any($event.target).value)"><option value="TODAS">Todas las zonas</option><option value="A">Zona A · Carros</option><option value="M">Zona M · Motos</option><option value="P">Zona P · Pesados</option><option value="OTRA">Otras zonas</option></select><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 9 5 5 5-5"/></svg></label></div>
+      </header>
+      <div class="legend"><span><i class="free-dot"></i>Libre</span><span><i class="occupied-dot"></i>Ocupada</span><span><i class="subscriber-dot"></i>Mensualidad</span></div>
+      @if (visibleCells().length) {
+        <div class="parking-grid">@for (cell of visibleCells(); track cell.id) {
+          <a class="spot-card" [class.free]="cell.estado === 'DISPONIBLE'" [class.occupied]="cell.estado === 'OCUPADA' && cell.mensualidad !== true" [class.subscriber]="cell.mensualidad === true" [routerLink]="['/control-acceso']" queryParamsHandling="merge" [queryParams]="cell.estado === 'DISPONIBLE' ? { celda_id: cell.id } : { placa: cell.vehiculo?.placa }" [title]="cell.estado === 'DISPONIBLE' ? 'Asignar ' + cell.codigo : 'Consultar ' + cell.codigo">
+            <span class="spot-top"><b>{{ cell.codigo }}</b><i class="spot-state" [class.occupied]="cell.estado === 'OCUPADA' && cell.mensualidad !== true" [class.subscriber]="cell.mensualidad === true"></i></span>
+            <svg class="spot-icon" viewBox="0 0 24 24" aria-hidden="true">@if (cell.tipo === 'MOTO') {<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="m9 17 3-7h3l3 7M8 10h4M14 7h3"/>} @else if (cell.tipo === 'PESADO') {<path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/>} @else {<path d="m5 17-1-1v-4l2-5h12l2 5v4l-1 1M5 12h14M7 17v2m10-2v2"/>}</svg>
+            @if (cell.vehiculo; as vehicle) {<span class="spot-detail"><strong>{{ vehicle.placa }}</strong><small>@if (cell.mensualidad === true) {Mensualidad} @else if (cell.entrada) {{{ entryTime(cell.entrada) }}} @else {Ocupada}</small></span>} @else {<span class="spot-detail"><strong>Disponible</strong><small>Asignar celda</small></span>}
+          </a>
+        }</div>
+        <footer class="panel-footer"><span>{{ countLabel() }}</span>@if (filteredCells().length > 18) {<button type="button" (click)="showAll.set(!showAll())">{{ showAll() ? 'Mostrar menos' : 'Ver mapa completo' }}<svg viewBox="0 0 24 24" aria-hidden="true"><path [attr.d]="showAll() ? 'm15 18-6-6 6-6' : 'm9 18 6-6-6-6'"/></svg></button>}</footer>
+      } @else {<div class="empty-state">No hay celdas para mostrar. Registra espacios desde el módulo <a routerLink="/gestion/celdas">Celdas</a>.</div>}
+    </section>
+  }
+</main>
