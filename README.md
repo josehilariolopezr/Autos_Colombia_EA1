@@ -8,8 +8,8 @@
 * Integrantes:	Jose Hilario Lopez / Dennyn Pandales
 * Facultad:	Ingeniería y Ciencias Agrícolas
 * Programa:	Ingeniería de Software y Datos
-* Asignatura:	INGENIERÍA DE SOFTWARE - PREICA2602B020053
-* Catedràtico: REINALDO ROJAS LÓPEZ
+* Asignatura:	Ingeniería de Software - PREICA2602B020053
+* Catedrático: Reinaldo Rojas López
 * Fecha de entrega	domingo 25 de Octubre
 
 # Autos Colombia
