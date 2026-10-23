@@ -1,3 +1,17 @@
+# SISTEMA DE INFORMACIÓN PARA EL PARQUEADERO "AUTOS COLOMBIA" S25 - EVIDENCIA DE APRENDIZAJE 1. DISEÑO SISTEMA DE INFORMACIÓN – ITERACIÓN 1
+
+
+<img width="311" height="100" alt="image" src="https://github.com/user-attachments/assets/cdbd74d8-ba8d-4fbd-b7d4-58e3257a210b" />
+
+* Ingeniería de Software y Datos · IU Digital de Antioquia 
+* Grupo:	40
+* Integrantes:	Jose Hilario Lopez / Dennyn Pandales
+* Facultad:	Ingeniería y Ciencias Agrícolas
+* Programa:	Ingeniería de Software y Datos
+* Asignatura:	INGENIERÍA DE SOFTWARE - PREICA2602B020053
+* Catedràtico: REINALDO ROJAS LÓPEZ
+* Fecha de entrega	domingo 25 de Octubre
+
 # Autos Colombia
 
 ## Pantalla Control de acceso
