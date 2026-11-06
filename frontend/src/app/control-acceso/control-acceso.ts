@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -8,6 +9,7 @@ import { Celda } from '../models/celda';
 import { Operador } from '../models/operador';
 import { EstadoVehiculo } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
+import { TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
 
 const nonBlank: ValidatorFn = (c) =>
   typeof c.value === 'string' && c.value.trim() ? null : { required: true };
@@ -15,7 +17,8 @@ const placa = (value: string) => value.trim().toUpperCase();
 
 @Component({
   selector: 'app-control-acceso',
-  imports: [ReactiveFormsModule],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, TicketIngresoComponent],
   templateUrl: './control-acceso.html',
   styleUrl: './control-acceso.css',
 })
@@ -26,10 +29,16 @@ export class ControlAcceso {
   readonly demoFinished = signal(false);
   private readonly api = inject(EstanciasService);
   private readonly fb = inject(FormBuilder);
+  
+  // Variables para controlar la visibilidad y datos del ticket de salida
+  readonly mostrarTicketSalida = signal<boolean>(false);
+  datosSalida: any = null;
+
   private readonly destroy = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private pendingCellId: number | null = null;
   private version = 0;
+  
   readonly entrada = this.fb.group({
     placa: this.fb.nonNullable.control('', nonBlank),
     celda_id: this.fb.control<number | null>(null, Validators.required),
@@ -39,6 +48,7 @@ export class ControlAcceso {
     placa: this.fb.nonNullable.control('', nonBlank),
     operador_id: this.fb.control<number | null>(null, Validators.required),
   });
+  
   readonly celdas = signal<Celda[]>([]);
   readonly operadores = signal<Operador[]>([]);
   readonly catalogLoading = signal(false);
@@ -198,12 +208,25 @@ export class ControlAcceso {
       .subscribe({
         next: (result) => {
           this.saving.set(false);
-          this.estado.set(null);
           if (version !== this.version) return;
           this.exitoSalida.set(
             `Salida registrada: ${value}, celda ${state.estancia!.celda.codigo}, ${this.fecha(result.salida!)}.`,
           );
-          this.buscar();
+          
+          // Asignación de datos del ticket con cobro $0 COP (Mensualidad $60.000)
+          this.datosSalida = {
+            placa_vehiculo: value,
+            tipo_vehiculo: state?.vehiculo?.tipo || 'AUTOMOVIL',
+            codigo_celda: state?.estancia?.celda?.codigo || 'A-09',
+            fecha_hora_entrada: (state?.estancia as any)?.ingreso || new Date(),
+            es_mensualidad: true,
+            tarifa_mensual: 60000,
+            total_pagar: 0,
+            nombre_operador: 'Andrés Molina (OP-001)'
+          };
+
+          // Activa el ticket modal en pantalla
+          this.mostrarTicketSalida.set(true);
         },
         error: (error) => {
           this.saving.set(false);

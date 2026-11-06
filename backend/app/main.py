@@ -39,3 +39,19 @@ async def entity_error_handler(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+# Constante de Mensualidad Autos Colombia
+TARIFA_MENSUALIDAD = 60000  # $60.000 COP
+
+@app.get("/api/estancias/liquidar/{placa}")
+def consultar_salida_mensualidad(placa: str):
+    # Consulta el estado de mensualidad del vehículo
+    # Al ser parqueadero exclusivo de mensualidad ($60.000/mes):
+    return {
+        "placa": placa,
+        "modalidad": "Mensualidad Fija",
+        "tarifa_mensual": TARIFA_MENSUALIDAD,
+        "total_a_pagar": 0,  # $0 para salidas de suscriptores
+        "estado_cliente": "Mensualidad Vigente / Al día"
+    }

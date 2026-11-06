@@ -1,0 +1,55 @@
+<div class="ticket-container" id="ticketImpresion">
+  <div class="header">
+    <img src="assets/autos-colombia-logo.png" alt="Autos Colombia" class="logo" />
+    <h2>Autos Colombia</h2>
+    <p class="subtitulo">GESTIÓN DE PARQUEADERO</p>
+    <hr class="linea-punteada" />
+    <p><strong>TICKET DE INGRESO - ENTRADA</strong></p>
+    <p class="empresa-info">
+      PARQUEADERO AUTOS COLOMBIA<br />
+      NIT: 900.123.456-7<br />
+      Calle 45 # 12-34, Bogotá<br />
+      Teléfono: 123 7234550
+    </p>
+    <hr class="linea-punteada" />
+  </div>
+
+  <div class="cuerpo">
+    <div class="dato-destacado">
+      <span class="etiqueta">PLACA:</span>
+      <span class="valor-placa">{{ estancia?.placa_vehiculo || 'JTR-428' }}</span>
+    </div>
+    
+    <div class="fila-dato">
+      <span>TIPO:</span>
+      <span>{{ estancia?.tipo_vehiculo || 'Carro' }}</span>
+    </div>
+    <div class="fila-dato">
+      <span>CELDA ASIGNADA:</span>
+      <span><strong>{{ estancia?.codigo_celda || 'A-01' }}</strong></span>
+    </div>
+    <div class="fila-dato">
+      <span>OPERADOR:</span>
+      <span>{{ estancia?.nombre_operador || 'Andrés Molina (OP-084)' }}</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <hr class="linea-punteada" />
+    <div class="codigo-barras">
+      <div class="barras"></div>
+      <span class="codigo-texto">{{ estancia?.placa_vehiculo || 'JTR-428' }}</span>
+    </div>
+    <p class="mensaje">
+      Por favor conserve este ticket para registrar su salida. ¡Buen viaje!
+    </p>
+    <p class="tipo-usuario">
+      Usuario: {{ estancia?.es_mensualidad ? 'Mensualidad' : 'Ocasional' }}
+    </p>
+  </div>
+</div>
+
+<div class="acciones-modal no-print">
+  <button class="btn-imprimir" (click)="imprimirTicket()">Imprimir Ticket</button>
+  <button class="btn-cerrar" (click)="cerrarModal()">Cerrar</button>
+</div>

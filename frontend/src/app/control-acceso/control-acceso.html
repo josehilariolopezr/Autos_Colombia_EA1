@@ -78,4 +78,12 @@
     @if (errorEntrada()) { <p class="notice error" role="alert">{{ errorEntrada() }}</p> } @if (exitoEntrada()) { <p class="notice success" role="status">{{ exitoEntrada() }}</p> }
   </details>
 </main>
+
+<!-- Modal del Ticket al registrar la salida -->
+<app-ticket-ingreso 
+  *ngIf="mostrarTicketSalida" 
+  [estancia]="datosSalida" 
+  (alCerrar)="mostrarTicketSalida = false">
+</app-ticket-ingreso>
+
 }
