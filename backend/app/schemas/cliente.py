@@ -2,9 +2,21 @@ from datetime import date, datetime
 from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, computed_field
+
+from app.models import required_text
 
 ClienteId = Annotated[int, Field(strict=True, ge=1, le=9223372036854775807)]
+Texto = Annotated[str, BeforeValidator(lambda value: required_text(value, "El campo"))]
+PlacaCliente = Annotated[Texto, AfterValidator(str.upper)]
+
+
+class ClienteCrear(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nombre: Texto
+    telefono: Texto
+    placa: PlacaCliente | None = None
 
 
 class ClienteEnVehiculo(BaseModel):
@@ -19,6 +31,7 @@ class ClienteEnVehiculo(BaseModel):
 
 class ClienteRespuesta(ClienteEnVehiculo):
     placa: str | None = None
+    tipo_vehiculo: Literal["MOTO", "AUTOMOVIL", "CAMIONETA"] | None = None
 
     @computed_field
     @property

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, InjectionToken } from '@angular/core';
 import { timeout } from 'rxjs';
-import { ClientesPagina, Vehiculo, VehiculoActualizar, VehiculoCrear, VehiculosPagina } from '../models/vehiculo';
+import { ClienteCrear, ClientesPagina, PagoMensualidad, PagoMensualidadCrear, Vehiculo, VehiculoActualizar, VehiculoCrear, VehiculosPagina } from '../models/vehiculo';
 import { DashboardResumen } from '../models/dashboard';
 
 // Mismo origen: el proxy de desarrollo define el destino real del backend.
@@ -22,6 +22,17 @@ export class ApiService {
   clients(offset: number, limit: number) {
     return this.http
       .get<ClientesPagina>(`${this.base}/clientes`, { params: { offset, limit } })
+      .pipe(timeout(15000));
+  }
+  createClient(data: ClienteCrear) {
+    return this.http.post<ClientesPagina['items'][number]>(`${this.base}/clientes`, data).pipe(timeout(15000));
+  }
+  payMonthly(clientId: number, data: PagoMensualidadCrear) {
+    return this.http.post<PagoMensualidad>(`${this.base}/clientes/${clientId}/mensualidades`, data).pipe(timeout(15000));
+  }
+  monthlyPayments(clientId: number, offset = 0, limit = 20) {
+    return this.http
+      .get<PagoMensualidad[]>(`${this.base}/clientes/${clientId}/mensualidades`, { params: { offset, limit } })
       .pipe(timeout(15000));
   }
   list(offset: number, limit: number) {

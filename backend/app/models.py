@@ -106,6 +106,7 @@ class Cliente(Base):
     telefono: Mapped[str] = mapped_column(Text, nullable=False)
     vencimiento: Mapped[date | None] = mapped_column(Date, nullable=True)
     vehiculos: Mapped[list[Vehiculo]] = relationship(back_populates="cliente")
+    pagos_mensualidad: Mapped[list["PagoMensualidad"]] = relationship(back_populates="cliente")
 
     @validates("codigo", "nombre", "telefono")
     def validate_text(self, key: str, value: str) -> str:
@@ -114,6 +115,32 @@ class Cliente(Base):
     @property
     def placa(self) -> str | None:
         return self.vehiculos[0].placa if self.vehiculos else None
+
+    @property
+    def tipo_vehiculo(self) -> str | None:
+        return self.vehiculos[0].tipo if self.vehiculos else None
+
+
+class PagoMensualidad(Base):
+    __tablename__ = "pago_mensualidad"
+    __table_args__ = (
+        CheckConstraint("valor > 0", name="ck_pago_mensualidad_valor_positivo"),
+        CheckConstraint("metodo_pago IN ('EFECTIVO', 'TARJETA', 'TRANSFERENCIA')", name="ck_pago_mensualidad_metodo"),
+        CheckConstraint("fecha_fin >= fecha_inicio", name="ck_pago_mensualidad_fechas"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    cliente_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("cliente.id", ondelete="RESTRICT"), nullable=False)
+    operador_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("operador.id", ondelete="RESTRICT"), nullable=False)
+    vehiculo_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("vehiculo.id", ondelete="RESTRICT"), nullable=False)
+    valor: Mapped[int] = mapped_column(Integer, nullable=False)
+    metodo_pago: Mapped[str] = mapped_column(Text, nullable=False)
+    fecha_pago: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    fecha_inicio: Mapped[date] = mapped_column(Date, nullable=False)
+    fecha_fin: Mapped[date] = mapped_column(Date, nullable=False)
+    cliente: Mapped[Cliente] = relationship(back_populates="pagos_mensualidad")
+    operador: Mapped[Operador] = relationship()
+    vehiculo: Mapped[Vehiculo] = relationship()
 
 
 class Estancia(Base):

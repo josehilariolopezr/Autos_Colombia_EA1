@@ -7,6 +7,10 @@ opcional con borrado `SET NULL`. La API expone `GET /clientes` con paginación;
 las consultas de estancia y el resumen del dashboard incluyen los datos del
 propietario cuando está asociado.
 
+`POST /clientes` crea un cliente con nombre y teléfono, genera su código `CL-...`
+y permite asociar opcionalmente una placa ya registrada que aún no tenga dueño.
+La interfaz ofrece este formulario desde **Nuevo cliente**.
+
 En el entorno local se aplicó la migración hasta `0003` y se cargaron 28 clientes
 y registros de muestra mediante `seed_demo.py`. El cargador se puede volver a
 ejecutar: agrega registros faltantes y conserva las filas existentes. Para usarlo
@@ -16,6 +20,21 @@ en otra copia, primero configura `.env` y ejecuta desde `backend`:
 .\.venv\Scripts\python.exe -m alembic -c .\alembic.ini upgrade head
 .\.venv\Scripts\python.exe .\seed_demo.py
 ```
+
+La revisión `0004` agrega `pago_mensualidad`. `POST /clientes/{id}/mensualidades`
+registra el pago según el tipo del vehículo: $30.000 COP para motos y $60.000
+COP para automóviles y camionetas. Guarda operador, vehículo, medio y período cubierto, y
+actualiza el vencimiento del cliente dentro de la misma transacción. El cuerpo
+requiere `placa`, `operador_id` y `metodo_pago` (`EFECTIVO`, `TARJETA` o
+`TRANSFERENCIA`). La pantalla de clientes ofrece esta operación e imprime el
+tiquete devuelto por la API. Para revisar la migración sin aplicarla:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic -c .\alembic.ini upgrade head --sql
+```
+
+La migración no se aplica automáticamente; ejecútala solo después de revisar el
+SQL y decidir actualizar el esquema local.
 
 Las placas del mockup son datos ficticios para desarrollo. La Vista general abre
 el control de salida con la placa seleccionada; allí la ficha consulta de

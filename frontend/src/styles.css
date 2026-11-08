@@ -61,3 +61,9 @@ a:focus-visible {
   .exit-page .owner-details { margin-inline: 14px; }
 }
 
+@media print {
+  body.ticket-printing * { visibility: hidden !important; }
+  body.ticket-printing #ticketImpresion,
+  body.ticket-printing #ticketImpresion * { visibility: visible !important; }
+}
+

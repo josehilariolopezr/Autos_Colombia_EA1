@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,7 +8,7 @@ import { Celda } from '../models/celda';
 import { Operador } from '../models/operador';
 import { EstadoVehiculo } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
-import { TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
+import { TicketData, TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
 
 const nonBlank: ValidatorFn = (c) =>
   typeof c.value === 'string' && c.value.trim() ? null : { required: true };
@@ -18,7 +17,7 @@ const placa = (value: string) => value.trim().toUpperCase();
 @Component({
   selector: 'app-control-acceso',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TicketIngresoComponent],
+  imports: [ReactiveFormsModule, TicketIngresoComponent],
   templateUrl: './control-acceso.html',
   styleUrl: './control-acceso.css',
 })
@@ -32,7 +31,7 @@ export class ControlAcceso {
   
   // Variables para controlar la visibilidad y datos del ticket de salida
   readonly mostrarTicketSalida = signal<boolean>(false);
-  datosSalida: any = null;
+  datosSalida: TicketData | null = null;
 
   private readonly destroy = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
@@ -213,19 +212,14 @@ export class ControlAcceso {
             `Salida registrada: ${value}, celda ${state.estancia!.celda.codigo}, ${this.fecha(result.salida!)}.`,
           );
           
-          // Asignación de datos del ticket con cobro $0 COP (Mensualidad $60.000)
           this.datosSalida = {
             placa_vehiculo: value,
-            tipo_vehiculo: state?.vehiculo?.tipo || 'AUTOMOVIL',
-            codigo_celda: state?.estancia?.celda?.codigo || 'A-09',
-            fecha_hora_entrada: (state?.estancia as any)?.ingreso || new Date(),
-            es_mensualidad: true,
-            tarifa_mensual: 60000,
-            total_pagar: 0,
-            nombre_operador: 'Andrés Molina (OP-001)'
+            tipo_vehiculo: state.vehiculo.tipo,
+            codigo_celda: state.estancia!.celda.codigo,
+            nombre_operador:
+              this.operadores().find((operator) => operator.id === this.consulta.controls.operador_id.value)?.nombre ?? '—',
+            tipo_ticket: 'SALIDA',
           };
-
-          // Activa el ticket modal en pantalla
           this.mostrarTicketSalida.set(true);
         },
         error: (error) => {

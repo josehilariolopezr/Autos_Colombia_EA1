@@ -1,55 +1,66 @@
-<div class="ticket-container" id="ticketImpresion">
-  <div class="header">
-    <img src="assets/autos-colombia-logo.png" alt="Autos Colombia" class="logo" />
-    <h2>Autos Colombia</h2>
-    <p class="subtitulo">GESTIÓN DE PARQUEADERO</p>
-    <hr class="linea-punteada" />
-    <p><strong>TICKET DE INGRESO - ENTRADA</strong></p>
-    <p class="empresa-info">
-      PARQUEADERO AUTOS COLOMBIA<br />
-      NIT: 900.123.456-7<br />
-      Calle 45 # 12-34, Bogotá<br />
-      Teléfono: 123 7234550
-    </p>
-    <hr class="linea-punteada" />
-  </div>
+<div class="ticket-backdrop">
+  <section class="ticket-dialog" role="dialog" aria-modal="true" aria-label="Vista previa del tiquete">
+    <article class="ticket-paper" id="ticketImpresion">
+      <header class="ticket-header">
+        <div class="brand-row">
+          <img src="/autos-colombia-logo.png" alt="Logo Autos Colombia" class="logo" />
+          <div class="brand-copy">
+            <h1>Autos Colombia</h1>
+            <p>GESTIÓN DE PARQUEADERO</p>
+          </div>
+        </div>
+        <h2>{{ estancia?.tipo_ticket === 'MENSUALIDAD' ? 'COMPROBANTE DE PAGO' : estancia?.tipo_ticket === 'SALIDA' ? 'TICKET DE SALIDA' : 'TICKET DE INGRESO - ENTRADA' }}</h2>
+        @if (estancia?.tipo_ticket === 'MENSUALIDAD') {
+          <p class="ticket-subtitle">MENSUALIDAD DE PARQUEADERO</p>
+        }
+        <div class="company-info">
+          PARQUEADERO AUTOS COLOMBIA<br />
+          NIT: 900.123.456-7<br />
+          Calle 45 # 12-34, Bogotá · Tel. 123 7234550
+        </div>
+      </header>
 
-  <div class="cuerpo">
-    <div class="dato-destacado">
-      <span class="etiqueta">PLACA:</span>
-      <span class="valor-placa">{{ estancia?.placa_vehiculo || 'JTR-428' }}</span>
-    </div>
-    
-    <div class="fila-dato">
-      <span>TIPO:</span>
-      <span>{{ estancia?.tipo_vehiculo || 'Carro' }}</span>
-    </div>
-    <div class="fila-dato">
-      <span>CELDA ASIGNADA:</span>
-      <span><strong>{{ estancia?.codigo_celda || 'A-01' }}</strong></span>
-    </div>
-    <div class="fila-dato">
-      <span>OPERADOR:</span>
-      <span>{{ estancia?.nombre_operador || 'Andrés Molina (OP-084)' }}</span>
-    </div>
-  </div>
+      <div class="dashed-rule"></div>
+      <div class="plate-block">
+        <span>PLACA</span>
+        <strong>{{ estancia?.placa_vehiculo || '—' }}</strong>
+      </div>
+      <div class="ticket-details">
+        <div class="detail-row"><span>TIPO DE VEHÍCULO</span><strong>{{ estancia?.tipo_vehiculo || '—' }}</strong></div>
+        @if (estancia?.tipo_ticket === 'MENSUALIDAD') {
+          <div class="detail-row"><span>CLIENTE</span><strong>{{ estancia.nombre_cliente }}</strong></div>
+          <div class="detail-row"><span>ID CLIENTE</span><strong>{{ estancia.codigo_cliente }}</strong></div>
+          <div class="detail-row"><span>REFERENCIA DE PAGO</span><strong>PM-{{ estancia.id }}</strong></div>
+          <div class="detail-row"><span>FECHA DE PAGO</span><strong>{{ fechaPago() }}</strong></div>
+          <div class="detail-row"><span>HORA</span><strong>{{ horaPago() }} · Bogotá</strong></div>
+          <div class="detail-row amount-row"><span>VALOR PAGADO</span><strong>{{ formatCop(estancia.valor) }}</strong></div>
+          <div class="detail-row"><span>MÉTODO DE PAGO</span><strong>{{ estancia.metodo_pago }}</strong></div>
+          <div class="detail-row"><span>VIGENCIA HASTA</span><strong>{{ estancia.fecha_fin }}</strong></div>
+        } @else {
+          @if (estancia?.codigo_celda) {
+            <div class="detail-row"><span>CELDA ASIGNADA</span><strong>{{ estancia.codigo_celda }}</strong></div>
+          }
+          <div class="detail-row"><span>OPERADOR</span><strong>{{ estancia?.nombre_operador || '—' }}</strong></div>
+        }
+      </div>
 
-  <div class="footer">
-    <hr class="linea-punteada" />
-    <div class="codigo-barras">
-      <div class="barras"></div>
-      <span class="codigo-texto">{{ estancia?.placa_vehiculo || 'JTR-428' }}</span>
-    </div>
-    <p class="mensaje">
-      Por favor conserve este ticket para registrar su salida. ¡Buen viaje!
-    </p>
-    <p class="tipo-usuario">
-      Usuario: {{ estancia?.es_mensualidad ? 'Mensualidad' : 'Ocasional' }}
-    </p>
-  </div>
-</div>
+      <div class="dashed-rule"></div>
+      <div class="barcode" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <p class="barcode-value">{{ estancia?.placa_vehiculo || '—' }}</p>
+      <footer class="ticket-footer">
+        @if (estancia?.tipo_ticket === 'MENSUALIDAD') {
+          <p>Conserve este comprobante como soporte de su pago.</p>
+          <strong>¡Gracias por elegir Autos Colombia!</strong>
+        } @else {
+          <p>Por favor conserve este ticket para registrar su salida.</p>
+          <strong>¡Buen viaje!</strong>
+        }
+      </footer>
+    </article>
 
-<div class="acciones-modal no-print">
-  <button class="btn-imprimir" (click)="imprimirTicket()">Imprimir Ticket</button>
-  <button class="btn-cerrar" (click)="cerrarModal()">Cerrar</button>
+    <footer class="ticket-actions no-print">
+      <button class="btn-imprimir" type="button" (click)="imprimirTicket()"><span aria-hidden="true">▣</span> Imprimir Ticket</button>
+      <button class="btn-cerrar" type="button" (click)="cerrarModal()">Cerrar · Finalizar</button>
+    </footer>
+  </section>
 </div>
