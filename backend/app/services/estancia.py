@@ -66,9 +66,11 @@ class ServicioEstancia:
     @transaccion
     def entrada(self, data: EntradaCrear) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
-        celda = self.session.get(Celda, data.celda_id)
+        celda = self.session.scalar(select(Celda).where(Celda.id == data.celda_id).with_for_update())
         if celda is None:
             raise EstanciaError(404, "Celda no encontrada.")
+        if celda.estado == "MANTENIMIENTO":
+            raise EstanciaError(409, "La celda está en mantenimiento y no se puede asignar.")
         operador = self._operador(data.operador_id)
         if self.session.scalar(select(Estancia.id).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)

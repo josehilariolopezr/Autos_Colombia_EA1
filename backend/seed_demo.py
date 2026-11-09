@@ -12,7 +12,7 @@ from app.models import Celda, Cliente, Estancia, Operador, Vehiculo
 BOGOTA = ZoneInfo("America/Bogota")
 CELDAS_FIGMA = [
     ("A-01", "JTR-428", (8, 24)), ("A-02", None, None), ("A-03", None, None),
-    ("A-04", "KLV-103", None), ("A-05", "NGQ-716", (9, 12)),
+    ("A-04", "KLV-103", None), ("A-05", None, None),
     ("A-06", None, None), ("A-07", "BMX-904", (10, 3)), ("A-08", None, None),
     ("M-01", "VRD-59F", (7, 58)), ("M-02", "QRS-82D", None),
     ("M-03", None, None), ("M-04", "DFK-31H", (10, 40)),
@@ -101,6 +101,11 @@ def seed() -> dict[str, int]:
                 session.add(cell)
                 cells[code] = cell
                 counts["celdas"] += 1
+            has_open_stay = session.scalar(
+                select(Estancia.id).where(Estancia.celda_id == cells[code].id, Estancia.salida.is_(None))
+            )
+            if code == "P-01" and not has_open_stay and cells[code].estado == "ACTIVA":
+                cells[code].estado = "MANTENIMIENTO"
             if plate and plate not in vehicles:
                 vehicle = Vehiculo(
                     placa=plate,

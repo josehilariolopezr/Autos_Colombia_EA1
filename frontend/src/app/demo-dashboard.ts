@@ -40,7 +40,7 @@ export function createDemoDashboard(): DashboardResumen {
     demoCell('A-02', 'A', 'DISPONIBLE'),
     demoCell('A-03', 'A', 'DISPONIBLE'),
     demoCell('A-04', 'A', 'OCUPADA', { plate: 'KLV-103', monthly: true }),
-    demoCell('A-05', 'A', 'OCUPADA', { plate: 'NGQ-716', enteredAt: [9, 12] }),
+    demoCell('A-05', 'A', 'MANTENIMIENTO'),
     demoCell('A-06', 'A', 'DISPONIBLE'),
     demoCell('A-07', 'A', 'OCUPADA', { plate: 'BMX-904', enteredAt: [10, 3] }),
     demoCell('A-08', 'A', 'DISPONIBLE'),
@@ -52,7 +52,7 @@ export function createDemoDashboard(): DashboardResumen {
     demoCell('M-06', 'M', 'DISPONIBLE'),
     demoCell('M-07', 'M', 'OCUPADA', { plate: 'APL-70G', monthly: true }),
     demoCell('M-08', 'M', 'DISPONIBLE'),
-    demoCell('P-01', 'P', 'DISPONIBLE'),
+    demoCell('P-01', 'P', 'MANTENIMIENTO'),
     demoCell('P-02', 'P', 'OCUPADA', { plate: 'TUX-872', enteredAt: [6, 42] }),
   ];
 
@@ -80,7 +80,7 @@ export function createDemoDashboard(): DashboardResumen {
   const celdas = [...visible, ...generated].map((cell, index) => ({ ...cell, id: index + 1 }));
   return {
     total_celdas: 62,
-    celdas_disponibles: 38,
+    celdas_disponibles: 37,
     celdas_ocupadas: 24,
     estancias_activas: 21,
     mensualidades_activas: 3,

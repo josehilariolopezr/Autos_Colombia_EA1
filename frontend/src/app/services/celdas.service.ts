@@ -25,6 +25,9 @@ export class CeldasService {
   update(id: number, data: CeldaActualizar) {
     return this.http.patch<Celda>(`${this.cells}/${id}`, data).pipe(timeout(15000));
   }
+  setMaintenance(id: number, enabled: boolean) {
+    return this.update(id, { estado: enabled ? 'MANTENIMIENTO' : 'ACTIVA' });
+  }
   delete(id: number) {
     return this.http.delete<void>(`${this.cells}/${id}`).pipe(timeout(15000));
   }

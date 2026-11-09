@@ -9,7 +9,7 @@ export interface DashboardCelda {
   codigo: string;
   tipo: string;
   zona: 'A' | 'M' | 'P' | 'OTRA';
-  estado: 'DISPONIBLE' | 'OCUPADA';
+  estado: 'DISPONIBLE' | 'OCUPADA' | 'MANTENIMIENTO';
   mensualidad: boolean | null;
   vehiculo: DashboardVehiculo | null;
   entrada: string | null;

@@ -63,11 +63,13 @@ class Celda(Base):
         CheckConstraint("codigo ~ '[^[:space:]]'", name="ck_celda_codigo_no_vacio"),
         CheckConstraint("codigo = upper(regexp_replace(codigo, '^[[:space:]]+|[[:space:]]+$', '', 'g'))", name="ck_celda_codigo_normalizado"),
         CheckConstraint("tipo ~ '[^[:space:]]'", name="ck_celda_tipo_no_vacio"),
+        CheckConstraint("estado IN ('ACTIVA', 'MANTENIMIENTO')", name="ck_celda_estado"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     codigo: Mapped[str] = mapped_column(Text, nullable=False)
     tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[str] = mapped_column(Text, nullable=False, default="ACTIVA", server_default="ACTIVA")
 
     @validates("codigo", "tipo")
     def validate_text(self, key: str, value: str) -> str:

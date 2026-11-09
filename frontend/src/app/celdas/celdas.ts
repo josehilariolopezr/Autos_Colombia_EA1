@@ -8,7 +8,7 @@ import { ErrorApi } from '../models/vehiculo';
 
 const nonBlank: ValidatorFn = (control) =>
   typeof control.value === 'string' && control.value.trim() ? null : { required: true };
-type Field = keyof CeldaCrear;
+type Field = 'codigo' | 'tipo';
 
 @Component({
   selector: 'app-celdas',
@@ -206,6 +206,27 @@ export class Celdas {
           }
         },
       });
+  }
+
+  toggleMaintenance(cell: Celda): void {
+    if (this.busy()) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.success.set('');
+    const enabled = cell.estado !== 'MANTENIMIENTO';
+    this.api.setMaintenance(cell.id, enabled).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (updated) => {
+        this.saving.set(false);
+        this.success.set(`Celda ${updated.codigo} ${enabled ? 'puesta en mantenimiento' : 'habilitada'} correctamente.`);
+        this.load();
+      },
+      error: (error) => {
+        this.saving.set(false);
+        this.actionError.set(error.status === 409
+          ? 'Cierra la estancia activa antes de poner esta celda en mantenimiento.'
+          : this.errorMessage(error));
+      },
+    });
   }
 
   private errorMessage(error: HttpErrorResponse, deleting = false): string {

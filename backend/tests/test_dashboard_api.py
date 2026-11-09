@@ -9,8 +9,8 @@ from app.main import app
 
 class FakeSession:
     def execute(self, _statement):
-        cell_available = SimpleNamespace(id=1, codigo="A-01", tipo="Automóvil")
-        cell_occupied = SimpleNamespace(id=2, codigo="A-02", tipo="Automóvil")
+        cell_available = SimpleNamespace(id=1, codigo="A-01", tipo="Automóvil", estado="ACTIVA")
+        cell_occupied = SimpleNamespace(id=2, codigo="A-02", tipo="Automóvil", estado="ACTIVA")
         stay = SimpleNamespace(entrada=datetime(2026, 10, 22, 12, tzinfo=timezone.utc))
         vehicle = SimpleNamespace(placa="ABC123", tipo="AUTOMOVIL")
         return SimpleNamespace(all=lambda: [(cell_available, None, None), (cell_occupied, stay, vehicle)])

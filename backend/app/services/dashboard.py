@@ -43,6 +43,7 @@ def get_dashboard_summary(session: Session) -> DashboardResumen:
 
     cells: list[CeldaDashboard] = []
     for cell, stay, vehicle in rows:
+        maintenance = cell.estado == "MANTENIMIENTO"
         occupied = stay is not None
         prefix = cell.codigo.split("-", maxsplit=1)[0].upper()
         cells.append(
@@ -51,7 +52,7 @@ def get_dashboard_summary(session: Session) -> DashboardResumen:
                 codigo=cell.codigo,
                 tipo=cell.tipo,
                 zona=prefix if prefix in {"A", "M", "P"} else "OTRA",
-                estado="OCUPADA" if occupied else "DISPONIBLE",
+                estado="MANTENIMIENTO" if maintenance else "OCUPADA" if occupied else "DISPONIBLE",
                 mensualidad=None,
                 vehiculo=(
                     VehiculoEnCelda(
@@ -71,7 +72,7 @@ def get_dashboard_summary(session: Session) -> DashboardResumen:
         )
 
     occupied = sum(cell.estado == "OCUPADA" for cell in cells)
-    available = len(cells) - occupied
+    available = sum(cell.estado == "DISPONIBLE" for cell in cells)
     return DashboardResumen(
         total_celdas=len(cells),
         celdas_disponibles=available,

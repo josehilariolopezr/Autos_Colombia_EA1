@@ -32,17 +32,19 @@
 .legend { display: flex; gap: 17px; padding: 9px 22px; border-top: 1px solid #edf1f4; border-bottom: 1px solid #edf1f4; color: #758397; font-size: 9px; }
 .legend span { display: flex; align-items: center; gap: 6px; }
 .legend i { width: 7px; height: 7px; border-radius: 50%; }
-.free-dot { background: #0e9f6e; }.occupied-dot { background: #df5555; }.subscriber-dot { background: #e3a438; }
+.free-dot { background: #0e9f6e; }.occupied-dot { background: #df5555; }.subscriber-dot { background: #e3a438; }.maintenance-dot { background: #6f7780; }
 .parking-grid { display: grid; grid-template-columns: repeat(9,minmax(85px,1fr)); gap: 9px; padding: 17px 22px 20px; }
 .spot-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; height: 118px; min-width: 0; overflow: hidden; padding: 12px; border: 1px solid #dce7e2; border-radius: 9px; color: #38586a; background: #fbfdfc; text-align: left; text-decoration: none; transition: transform .2s, box-shadow .2s; }
 .spot-card::after { position: absolute; inset: auto 0 0; height: 3px; content: ''; background: #0e9f6e; opacity: .75; }
 .spot-card:hover { transform: translateY(-2px); box-shadow: 0 5px 13px #0e314d14; }
 .spot-card.occupied { color: #ab5353; background: #fffafa; border-color: #f0dede; }.spot-card.occupied::after { background: #df5555; }
 .spot-card.subscriber { color: #bd8124; background: #fffdf8; border-color: #f0e5cf; }.spot-card.subscriber::after { background: #e3a438; }
+.spot-card.maintenance { color: #707982; background: #f6f7f8; border-color: #d9dde1; cursor: default; }.spot-card.maintenance::after { background: #707982; }.spot-card.maintenance:hover { transform: none; box-shadow: none; }
 .spot-top { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .spot-top b { color: #0c2340; font-size: 11px; }
 .spot-state { width: 6px; height: 6px; border-radius: 50%; background: #0e9f6e; }
 .spot-state.occupied { background: #df5555; }.spot-state.subscriber { background: #e3a438; }
+.spot-state.maintenance { background: #707982; }
 .spot-icon { position: absolute; top: 41px; align-self: center; width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; opacity: .72; }
 .spot-detail { display: flex; flex-direction: column; max-width: 100%; line-height: 1.1; }
 .spot-detail strong { overflow: hidden; color: #3d5265; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }

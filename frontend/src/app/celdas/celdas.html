@@ -94,6 +94,7 @@
             <tr>
               <th scope="col">Código</th>
               <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
@@ -102,7 +103,11 @@
               <tr>
                 <th scope="row">{{ cell.codigo }}</th>
                 <td>{{ cell.tipo }}</td>
+                <td>{{ cell.estado === 'MANTENIMIENTO' ? 'En mantenimiento' : 'Habilitada' }}</td>
                 <td class="row-actions">
+                  <button type="button" (click)="toggleMaintenance(cell)" [disabled]="busy()">
+                    {{ cell.estado === 'MANTENIMIENTO' ? 'Habilitar' : 'Mantenimiento' }}
+                  </button>
                   <button
                     type="button"
                     (click)="edit(cell)"

@@ -319,6 +319,17 @@ try {
 
 ### Pruebas automatizadas
 
+### Mantenimiento de celdas
+
+La revisión `0005` agrega el estado `ACTIVA`/`MANTENIMIENTO`. Después de iniciar
+PostgreSQL, aplica las revisiones con `.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head`
+desde `backend`. Para cargar la celda de muestra P-01 en mantenimiento, ejecuta
+`.venv\Scripts\python.exe seed_demo.py`;
+el script conserva registros y omite poner P-01 en mantenimiento si tiene una
+estancia activa. La gestión de celdas permite alternar el estado y el tablero
+muestra las celdas en gris. La aplicación todavía no cuenta con autenticación ni
+roles; por eso el control visual no constituye un permiso exclusivo de administrador.
+
 Las pruebas habituales no requieren PostgreSQL; la integración se omite por defecto:
 
 ```powershell

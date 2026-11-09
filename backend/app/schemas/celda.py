@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, field_validator
 
@@ -12,12 +12,14 @@ class CeldaCrear(BaseModel):
     model_config = ConfigDict(extra="forbid")
     codigo: Codigo
     tipo: Texto
+    estado: Literal["ACTIVA", "MANTENIMIENTO"] = "ACTIVA"
 
 
 class CeldaActualizar(BaseModel):
     model_config = ConfigDict(extra="forbid")
     codigo: Codigo | None = None
     tipo: Texto | None = None
+    estado: Literal["ACTIVA", "MANTENIMIENTO"] | None = None
 
     @field_validator("*", mode="before")
     @classmethod

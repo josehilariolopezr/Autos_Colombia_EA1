@@ -67,8 +67,15 @@ def get_cell(session: Session, cell_id: int) -> Celda:
 
 @database_operation
 def update_cell(session: Session, cell_id: int, data: CeldaActualizar) -> Celda:
-    cell = find_cell(session, cell_id)
-    for key, value in data.model_dump(exclude_unset=True).items():
+    cell = session.scalar(select(Celda).where(Celda.id == cell_id).with_for_update())
+    if cell is None:
+        raise CeldaError(404, "Celda no encontrada.")
+    changes = data.model_dump(exclude_unset=True)
+    if changes.get("estado") == "MANTENIMIENTO":
+        from app.models import Estancia
+        if session.scalar(select(Estancia.id).where(Estancia.celda_id == cell_id, Estancia.salida.is_(None))):
+            raise CeldaError(409, "Cierre la estancia activa antes de poner la celda en mantenimiento.")
+    for key, value in changes.items():
         setattr(cell, key, value)
     session.commit()
     session.refresh(cell)

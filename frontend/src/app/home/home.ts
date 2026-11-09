@@ -5,7 +5,7 @@ import { DashboardCelda, DashboardResumen } from '../models/dashboard';
 import { createDemoDashboard } from '../demo-dashboard';
 import { ApiService } from '../services/api.service';
 
-type CellFilter = 'TODAS' | 'LIBRES' | 'OCUPADAS' | 'MENSUALIDAD';
+type CellFilter = 'TODAS' | 'LIBRES' | 'OCUPADAS' | 'MENSUALIDAD' | 'MANTENIMIENTO';
 type ZoneFilter = 'TODAS' | 'A' | 'M' | 'P' | 'OTRA';
 
 @Component({
@@ -34,7 +34,10 @@ export class Home {
         || (filter === 'LIBRES' && cell.estado === 'DISPONIBLE')
         || (filter === 'OCUPADAS' && cell.estado === 'OCUPADA' && cell.mensualidad !== true)
         || (filter === 'MENSUALIDAD' && cell.mensualidad === true);
-      return matchesFilter && (zone === 'TODAS' || cell.zona === zone);
+      const matchesState = filter === 'MANTENIMIENTO'
+        ? cell.estado === 'MANTENIMIENTO'
+        : matchesFilter;
+      return matchesState && (zone === 'TODAS' || cell.zona === zone);
     });
   });
   protected readonly visibleCells = computed(() =>
@@ -46,6 +49,7 @@ export class Home {
     return data ? data.celdas_ocupadas - (data.mensualidades_activas ?? 0) : 0;
   });
   protected readonly monthlyCount = computed(() => this.summary()?.mensualidades_activas);
+  protected readonly maintenanceCount = computed(() => this.summary()?.celdas.filter((cell) => cell.estado === 'MANTENIMIENTO').length ?? 0);
   protected readonly percentAvailable = computed(() => {
     const data = this.summary();
     return data?.total_celdas ? Math.round((data.celdas_disponibles / data.total_celdas) * 100) : 0;

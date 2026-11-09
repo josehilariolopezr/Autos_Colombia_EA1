@@ -6,7 +6,7 @@ import { Celdas } from './celdas';
 describe('Gestión de celdas', () => {
   let fixture: ComponentFixture<Celdas>;
   let http: HttpTestingController;
-  const cell = { id: 1, codigo: 'A-01', tipo: 'Categoría libre' };
+  const cell = { id: 1, codigo: 'A-01', tipo: 'Categoría libre', estado: 'ACTIVA' as const };
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Celdas],

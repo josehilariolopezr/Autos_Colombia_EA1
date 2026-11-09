@@ -19,7 +19,7 @@ class CeldaDashboard(BaseModel):
     codigo: str
     tipo: str
     zona: Literal["A", "M", "P", "OTRA"]
-    estado: Literal["DISPONIBLE", "OCUPADA"]
+    estado: Literal["DISPONIBLE", "OCUPADA", "MANTENIMIENTO"]
     mensualidad: bool | None = None
     vehiculo: VehiculoEnCelda | None = None
     entrada: datetime | None = None

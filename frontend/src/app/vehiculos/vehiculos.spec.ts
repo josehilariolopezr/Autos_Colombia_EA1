@@ -41,6 +41,8 @@ describe('Gestión de vehículos', () => {
     color: 'Azul',
     modelo: 2025,
     tipo: 'MOTO',
+    cliente_id: null,
+    cliente: null,
   };
   const flushList = (items: Vehiculo[] = [], total = items.length, offset = 0) => {
     http
