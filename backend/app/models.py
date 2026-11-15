@@ -199,3 +199,33 @@ class Estancia(Base):
         self.salida = fecha_salida
         self.operador_salida = operador
         self.operador_salida_id = operador.id
+
+
+class Novedad(Base):
+    __tablename__ = "novedad"
+    __table_args__ = (
+        CheckConstraint("descripcion ~ '[^[:space:]]'", name="ck_novedad_descripcion_no_vacia"),
+        Index("ix_novedad_vehiculo_id", "vehiculo_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    vehiculo_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("vehiculo.id", name="fk_novedad_vehiculo", ondelete="RESTRICT"), nullable=False
+    )
+    estancia_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("estancia.id", name="fk_novedad_estancia", ondelete="SET NULL"), nullable=True
+    )
+    operador_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("operador.id", name="fk_novedad_operador", ondelete="RESTRICT"), nullable=False
+    )
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    fecha_registro: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    vehiculo: Mapped[Vehiculo] = relationship()
+    estancia: Mapped[Estancia | None] = relationship()
+    operador: Mapped[Operador] = relationship()
+
+    @validates("descripcion")
+    def validate_descripcion(self, key: str, value: str) -> str:
+        return required_text(value, key)

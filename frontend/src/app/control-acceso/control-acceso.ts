@@ -4,11 +4,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { Celda } from '../models/celda';
 import { Operador } from '../models/operador';
 import { EstadoVehiculo } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
 import { TicketData, TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
+import { NovedadesService } from '../services/novedades.service';
 
 const nonBlank: ValidatorFn = (c) =>
   typeof c.value === 'string' && c.value.trim() ? null : { required: true };
@@ -27,6 +29,7 @@ export class ControlAcceso {
   readonly demoPayment = signal<'Efectivo' | 'Tarjeta' | 'Transferencia'>('Efectivo');
   readonly demoFinished = signal(false);
   private readonly api = inject(EstanciasService);
+  private readonly novedadesApi = inject(NovedadesService);
   private readonly fb = inject(FormBuilder);
   
   // Variables para controlar la visibilidad y datos del ticket de salida
@@ -60,6 +63,13 @@ export class ControlAcceso {
   readonly errorConsulta = signal('');
   readonly exitoEntrada = signal('');
   readonly exitoSalida = signal('');
+  readonly showNovedad = signal(false);
+  readonly descripcionNovedad = signal('');
+  readonly savingNovedad = signal(false);
+  readonly errorNovedad = signal('');
+  readonly exitoNovedad = signal('');
+  readonly mensualidadIngreso = signal('');
+  readonly consultandoIngreso = signal(false);
 
   constructor() {
     if (this.demoMode) return;
@@ -84,6 +94,9 @@ export class ControlAcceso {
         this.errorConsulta.set('');
         this.exitoSalida.set('');
       });
+    this.entrada.controls.placa.valueChanges.pipe(
+      debounceTime(350), distinctUntilChanged(), takeUntilDestroyed(this.destroy),
+    ).subscribe((value) => this.consultarIngreso(value));
     this.cargarCatalogos();
   }
 
@@ -120,6 +133,41 @@ export class ControlAcceso {
       this.entrada.controls.celda_id.setValue(id);
       this.pendingCellId = null;
     }
+  }
+
+  private consultarIngreso(value: string): void {
+    const plate = placa(value);
+    this.mensualidadIngreso.set('');
+    if (plate.length < 3) return;
+    this.consultandoIngreso.set(true);
+    this.api.consultar(plate).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: (result) => {
+        this.consultandoIngreso.set(false);
+        const owner = result.vehiculo.cliente;
+        const dateParts = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit',
+        }).formatToParts(new Date());
+        const part = (name: Intl.DateTimeFormatPartTypes) => dateParts.find((item) => item.type === name)?.value ?? '01';
+        const today = `${part('year')}-${part('month')}-${part('day')}`;
+        const valid = owner?.vencimiento !== null && owner?.vencimiento !== undefined && owner.vencimiento >= today;
+        this.mensualidadIngreso.set(valid
+          ? `Mensualidad vigente hasta ${this.fechaCorta(owner.vencimiento!)}`
+          : 'Sin mensualidad vigente: el ingreso será rechazado.');
+        this.api.sugerirCelda(result.vehiculo.tipo).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+          next: (cell) => {
+            if (this.entrada.controls.placa.value.trim().toUpperCase() === plate) {
+              this.entrada.controls.celda_id.setValue(cell.id);
+              this.mensualidadIngreso.set(this.mensualidadIngreso() + ` · Celda sugerida ${cell.codigo}`);
+            }
+          },
+          error: () => this.mensualidadIngreso.set(this.mensualidadIngreso() + ' · No hay celdas compatibles disponibles.'),
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        this.consultandoIngreso.set(false);
+        if (error.status === 404) this.mensualidadIngreso.set('Placa no registrada. Registra el vehículo antes del ingreso.');
+      },
+    });
   }
 
   registrarEntrada(): void {
@@ -233,6 +281,35 @@ export class ControlAcceso {
       });
   }
 
+  registrarNovedad(): void {
+    const state = this.estado();
+    const operatorId = this.consulta.controls.operador_id.value;
+    const descripcion = this.descripcionNovedad().trim();
+    if (!state || !operatorId || !descripcion) {
+      this.errorNovedad.set('Selecciona un operador y escribe la descripción de la novedad.');
+      return;
+    }
+    this.savingNovedad.set(true);
+    this.errorNovedad.set('');
+    this.novedadesApi.create({
+      vehiculo_id: state.vehiculo.id,
+      estancia_id: state.estancia?.id ?? null,
+      operador_id: operatorId,
+      descripcion,
+    }).pipe(takeUntilDestroyed(this.destroy)).subscribe({
+      next: () => {
+        this.savingNovedad.set(false);
+        this.showNovedad.set(false);
+        this.descripcionNovedad.set('');
+        this.exitoNovedad.set('Novedad registrada para ' + state.vehiculo.placa + '.');
+      },
+      error: (error: HttpErrorResponse) => {
+        this.savingNovedad.set(false);
+        this.errorNovedad.set(error.error?.detail ?? 'No se pudo registrar la novedad.');
+      },
+    });
+  }
+
   fecha(value: string): string {
     return (
       new Intl.DateTimeFormat('es-CO', {
@@ -272,7 +349,7 @@ export class ControlAcceso {
   }
 
   private mensaje(error: HttpErrorResponse): string {
-    if ([404, 409].includes(error.status) && typeof error.error?.detail === 'string')
+    if ([400, 404, 409, 422].includes(error.status) && typeof error.error?.detail === 'string')
       return error.error.detail;
     if (error.status === 422)
       return 'Datos inválidos. Revisa la placa y selecciona una celda y un operador válidos según la operación.';

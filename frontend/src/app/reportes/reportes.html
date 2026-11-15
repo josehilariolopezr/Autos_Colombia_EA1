@@ -1,0 +1,13 @@
+<main class="report-page">
+  <header><span class="eyebrow">ANÁLISIS</span><h1>Reportes operativos</h1><p>Ocupación, movimientos recientes y recaudo de mensualidades.</p><button type="button" (click)="load()" [disabled]="loading()">Actualizar</button></header>
+  @if (loading()) { <p role="status">Consultando reportes…</p> }
+  @if (error()) { <p class="report-error" role="alert">{{ error() }}</p> }
+  @if (summary(); as data) {
+    <section class="report-kpis" aria-label="Resumen operativo">
+      <article><span>Ocupación</span><strong>{{ data.celdas_ocupadas }} / {{ data.total_celdas }}</strong><small>{{ data.celdas_disponibles }} espacios disponibles</small></article>
+      <article><span>Mensualidades vigentes</span><strong>{{ data.mensualidades_activas ?? 0 }}</strong><small>Clientes con vencimiento vigente</small></article>
+      <article><span>Recaudo hoy</span><strong>{{ cop(data.recaudacion_hoy) }}</strong><small>Pagos de mensualidad registrados hoy</small></article>
+    </section>
+    <section class="report-panel"><h2>Estancias recientes</h2><div class="table-scroll"><table><thead><tr><th>Placa</th><th>Celda</th><th>Entrada</th><th>Salida</th></tr></thead><tbody>@for (stay of stays(); track stay.id) {<tr><th>{{ stay.placa }}</th><td>{{ stay.celda }}</td><td>{{ date(stay.entrada) }}</td><td>{{ stay.salida ? date(stay.salida) : 'Activa' }}</td></tr>} @empty {<tr><td colspan="4">No hay estancias registradas.</td></tr>}</tbody></table></div></section>
+  }
+</main>

@@ -330,6 +330,11 @@ estancia activa. La gestión de celdas permite alternar el estado y el tablero
 muestra las celdas en gris. La aplicación todavía no cuenta con autenticación ni
 roles; por eso el control visual no constituye un permiso exclusivo de administrador.
 
+La revisión `0006` agrega la tabla `novedad` sin alterar las tablas existentes.
+El mismo comando `alembic upgrade head` aplica también esta revisión. El endpoint
+`/novedades` lista por fecha descendente y permite filtrar por `placa` o
+`vehiculo_id`; el POST valida sus referencias antes de guardar.
+
 Las pruebas habituales no requieren PostgreSQL; la integración se omite por defecto:
 
 ```powershell

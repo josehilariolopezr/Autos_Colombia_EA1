@@ -46,9 +46,10 @@ export class Home {
   protected readonly freeCount = computed(() => this.summary()?.celdas_disponibles ?? 0);
   protected readonly occupiedCount = computed(() => {
     const data = this.summary();
-    return data ? data.celdas_ocupadas - (data.mensualidades_activas ?? 0) : 0;
+    return data ? data.celdas_ocupadas - this.monthlyCellCount() : 0;
   });
   protected readonly monthlyCount = computed(() => this.summary()?.mensualidades_activas);
+  protected readonly monthlyCellCount = computed(() => this.summary()?.celdas.filter((cell) => cell.mensualidad === true).length ?? 0);
   protected readonly maintenanceCount = computed(() => this.summary()?.celdas.filter((cell) => cell.estado === 'MANTENIMIENTO').length ?? 0);
   protected readonly percentAvailable = computed(() => {
     const data = this.summary();

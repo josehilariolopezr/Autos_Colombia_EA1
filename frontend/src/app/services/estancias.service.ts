@@ -3,8 +3,9 @@ import { inject, Injectable } from '@angular/core';
 import { EMPTY, Observable, expand, reduce, throwError, timeout } from 'rxjs';
 import { Celda } from '../models/celda';
 import { Operador } from '../models/operador';
-import { EntradaCrear, SalidaCrear, Estancia, EstadoVehiculo } from '../models/estancia';
+import { EntradaCrear, SalidaCrear, Estancia, EstadoVehiculo, EstanciaReciente } from '../models/estancia';
 import { API_BASE_URL } from './api.service';
+import { TipoVehiculo } from '../models/vehiculo';
 import { CeldasService } from './celdas.service';
 import { OperadoresService } from './operadores.service';
 
@@ -32,6 +33,12 @@ export class EstanciasService {
     return this.http
       .get<EstadoVehiculo>(`${this.base}/vehiculo/${encodeURIComponent(placa)}`)
       .pipe(timeout(15000));
+  }
+  sugerirCelda(tipo: TipoVehiculo) {
+    return this.http.get<Celda>(`${this.base}/sugerir-celda`, { params: { tipo } }).pipe(timeout(15000));
+  }
+  recientes(limit = 20) {
+    return this.http.get<EstanciaReciente[]>(`${this.base}/recientes`, { params: { limit } }).pipe(timeout(15000));
   }
   celdas(): Observable<Celda[]> {
     return this.todas((offset) => this.cells.list(offset, 100));

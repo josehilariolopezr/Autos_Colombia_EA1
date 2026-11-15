@@ -52,6 +52,7 @@
             } @else { <div><span class="eyebrow">PROPIETARIO</span><strong>No hay cliente asociado a esta placa.</strong><small>Vincula el vehículo con un cliente desde la gestión.</small></div> }
           </div>
           @if (state.estancia) { <div class="entry-note"><span>✓ &nbsp; Ingreso registrado en PostgreSQL</span><small>Estancia #{{ state.estancia.id }}</small></div> }
+          @if (state.esta_dentro) { <button class="incident-button" type="button" (click)="showNovedad.set(true); errorNovedad.set(''); exitoNovedad.set('')">Registrar novedad del vehículo</button> }
         </section>
       }
     </div>
@@ -65,14 +66,15 @@
       <select id="exit-operator" [formControl]="consulta.controls.operador_id"><option [ngValue]="null">Selecciona un operador</option>@for (operator of operadores(); track operator.id) { <option [ngValue]="operator.id">{{ operator.nombre }} · OP-{{ operator.id.toString().padStart(3, '0') }}</option> }</select>
       @if (consulta.controls.operador_id.touched && consulta.controls.operador_id.invalid) { <small class="field-error">Selecciona el operador para continuar.</small> }
       <button class="confirm-exit" type="button" (click)="registrarSalida()" [disabled]="busy() || catalogLoading() || !estado()?.esta_dentro">Registrar salida</button>
+      @if (exitoNovedad()) { <p class="notice success" role="status">{{ exitoNovedad() }}</p> }
       <small class="release-note">La salida se guarda en PostgreSQL y libera la celda.</small>
       @if (saving()) { <p role="status">Guardando salida…</p> }
     </aside>
   </div>
   <details class="entry-form-details"><summary>Registrar ingreso de un vehículo</summary>
     <form [formGroup]="entrada" (ngSubmit)="registrarEntrada()"><div class="form-grid">
-      <div class="field"><label for="entry-plate">Placa</label><input id="entry-plate" formControlName="placa" /></div>
-      <div class="field"><label for="entry-cell">Celda</label><select id="entry-cell" formControlName="celda_id"><option [ngValue]="null">Selecciona una celda</option>@for (cell of celdas(); track cell.id) { <option [ngValue]="cell.id">{{ cell.codigo }} · {{ cell.tipo }}</option> }</select></div>
+      <div class="field"><label for="entry-plate">Placa</label><input id="entry-plate" formControlName="placa" />@if (consultandoIngreso()) {<small role="status">Consultando mensualidad y celda…</small>} @else if (mensualidadIngreso()) {<small>{{ mensualidadIngreso() }}</small>}</div>
+      <div class="field"><label for="entry-cell">Celda</label><select id="entry-cell" formControlName="celda_id"><option [ngValue]="null">Selecciona una celda</option>@for (cell of celdas(); track cell.id) { @if (cell.estado === 'ACTIVA') { <option [ngValue]="cell.id">{{ cell.codigo }} · {{ cell.tipo }}</option> } }</select></div>
       <div class="field"><label for="entry-operator">Operador</label><select id="entry-operator" formControlName="operador_id"><option [ngValue]="null">Selecciona un operador</option>@for (operator of operadores(); track operator.id) { <option [ngValue]="operator.id">{{ operator.nombre }}</option> }</select></div>
     </div><button class="confirm-exit" type="submit" [disabled]="busy() || catalogLoading()">Registrar ingreso</button></form>
     @if (errorEntrada()) { <p class="notice error" role="alert">{{ errorEntrada() }}</p> } @if (exitoEntrada()) { <p class="notice success" role="status">{{ exitoEntrada() }}</p> }
@@ -82,4 +84,7 @@
 
 @if (mostrarTicketSalida()) {
   <app-ticket-ingreso [estancia]="datosSalida" (alCerrar)="mostrarTicketSalida.set(false)" />
+}
+@if (showNovedad()) {
+  <div class="modal-backdrop" (click)="showNovedad.set(false)"><section class="exit-card quick-novedad" role="dialog" aria-modal="true" aria-labelledby="quick-novedad-title" (click)="$event.stopPropagation()"><button type="button" class="modal-close" aria-label="Cerrar" (click)="showNovedad.set(false)">×</button><span class="eyebrow">{{ estado()?.vehiculo?.placa }}</span><h2 id="quick-novedad-title">Registrar novedad</h2><label for="quick-novedad-operator">Operador</label><select id="quick-novedad-operator" [formControl]="consulta.controls.operador_id"><option [ngValue]="null">Selecciona un operador</option>@for (operator of operadores(); track operator.id) {<option [ngValue]="operator.id">{{ operator.nombre }}</option>}</select><label for="quick-novedad-description">Descripción</label><textarea id="quick-novedad-description" rows="4" [value]="descripcionNovedad()" (input)="descripcionNovedad.set($any($event.target).value)"></textarea>@if (errorNovedad()) {<p class="notice error" role="alert">{{ errorNovedad() }}</p>}<button class="confirm-exit" type="button" [disabled]="savingNovedad()" (click)="registrarNovedad()">{{ savingNovedad() ? 'Guardando…' : 'Guardar novedad' }}</button></section></div>
 }

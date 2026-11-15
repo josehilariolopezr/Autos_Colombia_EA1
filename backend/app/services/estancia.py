@@ -1,11 +1,12 @@
 from datetime import datetime, timezone
 from functools import wraps
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models import Celda, Estancia, Operador, Vehiculo, required_text
+from app.models import Celda, Cliente, Estancia, Operador, Vehiculo, required_text
 from app.schemas.celda import CeldaRespuesta
 from app.schemas.estancia import (
     EntradaCrear, SalidaCrear, EstanciaRespuesta, EstanciaAbiertaRespuesta,
@@ -66,11 +67,21 @@ class ServicioEstancia:
     @transaccion
     def entrada(self, data: EntradaCrear) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
+        hoy = datetime.now(ZoneInfo("America/Bogota")).date()
+        if vehiculo.cliente_id is None:
+            raise EstanciaError(422, "El parqueadero opera exclusivamente por mensualidad vigente. Asocia un cliente con mensualidad activa antes del ingreso.")
+        cliente = self.session.get(Cliente, vehiculo.cliente_id)
+        if cliente is None or cliente.vencimiento is None or cliente.vencimiento < hoy:
+            raise EstanciaError(422, "El parqueadero opera exclusivamente por mensualidad vigente. La mensualidad del vehículo está vencida o no registrada.")
         celda = self.session.scalar(select(Celda).where(Celda.id == data.celda_id).with_for_update())
         if celda is None:
             raise EstanciaError(404, "Celda no encontrada.")
         if celda.estado == "MANTENIMIENTO":
             raise EstanciaError(409, "La celda está en mantenimiento y no se puede asignar.")
+        zona_celda = celda.codigo.split("-", maxsplit=1)[0].upper()
+        zonas_compatibles = {"MOTO": {"M"}, "AUTOMOVIL": {"A", "P"}, "CAMIONETA": {"A", "P"}}
+        if zona_celda not in zonas_compatibles[vehiculo.tipo]:
+            raise EstanciaError(422, "La celda seleccionada no es compatible con el tipo de vehículo.")
         operador = self._operador(data.operador_id)
         if self.session.scalar(select(Estancia.id).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)
@@ -86,6 +97,23 @@ class ServicioEstancia:
         # Los índices únicos deciden también cuando dos solicitudes superan las consultas previas.
         self.session.flush()
         return EstanciaRespuesta.model_validate(estancia)
+
+    def sugerir_celda(self, tipo: str) -> Celda:
+        zonas = {"MOTO": ("M",), "AUTOMOVIL": ("A", "P"), "CAMIONETA": ("A", "P")}[tipo]
+        statement = (
+            select(Celda)
+            .where(Celda.estado == "ACTIVA")
+            .where(~select(Estancia.id).where(Estancia.celda_id == Celda.id, Estancia.salida.is_(None)).exists())
+            .order_by(Celda.codigo, Celda.id)
+        )
+        try:
+            for cell in self.session.scalars(statement):
+                if cell.codigo.split("-", maxsplit=1)[0].upper() in zonas:
+                    return cell
+        except SQLAlchemyError:
+            self.session.rollback()
+            raise EstanciaError(503, "No se pudo buscar una celda compatible.") from None
+        raise EstanciaError(404, "No hay celdas activas disponibles para ese tipo de vehículo.")
 
     @transaccion
     def salida(self, data: SalidaCrear) -> EstanciaRespuesta:

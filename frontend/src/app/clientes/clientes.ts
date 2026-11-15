@@ -6,11 +6,15 @@ import { Cliente, ClienteCrear, PagoMensualidad, Vehiculo } from '../models/vehi
 import { OperadoresService } from '../services/operadores.service';
 import { Operador } from '../models/operador';
 import { TicketData, TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
+import { NovedadesService } from '../services/novedades.service';
+import { Novedad } from '../models/novedad';
+import { Vehiculo as VehiculoRegistro } from '../models/vehiculo';
 
 @Component({ selector: 'app-clientes', imports: [RouterLink, TicketIngresoComponent], templateUrl: './clientes.html', styleUrl: './clientes.css' })
 export class Clientes {
   private readonly api = inject(ApiService);
   private readonly operatorsApi = inject(OperadoresService);
+  private readonly novedadesApi = inject(NovedadesService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly tab = signal<'clientes' | 'novedades'>('clientes');
   protected readonly query = signal('');
@@ -53,11 +57,17 @@ export class Clientes {
   });
   protected readonly rows = computed(() => this.list().slice((this.page() - 1) * 5, this.page() * 5));
   protected readonly pages = computed(() => Math.max(1, Math.ceil(this.list().length / 5)));
-  protected readonly novedades = [
-    { title: 'Vehículo en celda no asignada', plate: 'LWM-614', detail: 'Zona A · A-09', time: 'Hoy, 10:32 a. m.', state: 'Pendiente' },
-    { title: 'Cliente solicita actualizar sus datos', plate: 'HTN-390', detail: 'Felipe Duarte', time: 'Hoy, 9:18 a. m.', state: 'En revisión' },
-    { title: 'Daño reportado en celda M-12', plate: '—', detail: 'Zona de motos', time: 'Ayer, 4:42 p. m.', state: 'Pendiente' },
-  ];
+  protected readonly novedades = signal<Novedad[]>([]);
+  protected readonly novedadesLoading = signal(false);
+  protected readonly novedadesError = signal('');
+  protected readonly showNovedad = signal(false);
+  protected readonly novedadVehicles = signal<VehiculoRegistro[]>([]);
+  protected readonly novedadOperators = signal<Operador[]>([]);
+  protected readonly novedadVehicleId = signal<number | null>(null);
+  protected readonly novedadOperatorId = signal<number | null>(null);
+  protected readonly novedadDescription = signal('');
+  protected readonly novedadSaving = signal(false);
+  protected readonly novedadError = signal('');
 
   constructor() { this.load(); }
 
@@ -68,6 +78,66 @@ export class Clientes {
       next: (page) => { this.clients.set(page.items); this.loading.set(false); },
       error: () => { this.loadError.set('No pudimos cargar los clientes desde la API.'); this.loading.set(false); },
     });
+  }
+
+  protected selectTab(tab: 'clientes' | 'novedades'): void {
+    this.tab.set(tab);
+    if (tab === 'novedades') this.loadNovedades();
+  }
+
+  protected loadNovedades(): void {
+    this.novedadesLoading.set(true);
+    this.novedadesError.set('');
+    this.novedadesApi.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (items) => { this.novedades.set(items); this.novedadesLoading.set(false); },
+      error: (error: { error?: { detail?: string } }) => {
+        this.novedadesLoading.set(false);
+        this.novedadesError.set(error.error?.detail ?? 'No se pudieron cargar las novedades.');
+      },
+    });
+  }
+
+  protected openNovedad(): void {
+    this.novedadError.set('');
+    this.novedadDescription.set('');
+    this.novedadVehicleId.set(null);
+    this.novedadOperatorId.set(null);
+    this.novedadVehicles.set([]);
+    this.novedadOperators.set([]);
+    this.showNovedad.set(true);
+    this.api.list(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (page) => this.novedadVehicles.set(page.items),
+      error: () => this.novedadError.set('No se pudo cargar el catálogo de vehículos.'),
+    });
+    this.operatorsApi.list(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (page) => this.novedadOperators.set(page.items),
+      error: () => this.novedadError.set('No se pudo cargar el catálogo de operadores.'),
+    });
+  }
+
+  protected saveNovedad(): void {
+    const vehicleId = this.novedadVehicleId();
+    const operatorId = this.novedadOperatorId();
+    const description = this.novedadDescription().trim();
+    if (vehicleId === null || operatorId === null || !description) {
+      this.novedadError.set('Selecciona el vehículo, el operador y escribe una descripción.');
+      return;
+    }
+    this.novedadSaving.set(true);
+    this.novedadError.set('');
+    this.novedadesApi.create({ vehiculo_id: vehicleId, estancia_id: null, operador_id: operatorId, descripcion: description })
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.novedadSaving.set(false);
+          this.showNovedad.set(false);
+          this.loadNovedades();
+          this.actionSuccess.set('Novedad registrada correctamente.');
+        },
+        error: (error: { error?: { detail?: string } }) => {
+          this.novedadSaving.set(false);
+          this.novedadError.set(error.error?.detail ?? 'No se pudo registrar la novedad.');
+        },
+      });
   }
 
   protected search(value: string): void { this.query.set(value); this.page.set(1); }

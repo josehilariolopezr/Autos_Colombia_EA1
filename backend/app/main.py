@@ -13,6 +13,7 @@ from app.routers.dashboard import router as dashboard_router
 from app.services.dashboard import DashboardError
 from app.routers.clientes import router as clientes_router
 from app.services.cliente import ClienteError
+from app.routers.novedades import router as novedades_router
 
 app = FastAPI(title="Autos Colombia API")
 app.include_router(vehiculos_router)
@@ -21,6 +22,7 @@ app.include_router(operadores_router)
 app.include_router(estancias_router)
 app.include_router(dashboard_router)
 app.include_router(clientes_router)
+app.include_router(novedades_router)
 
 
 @app.exception_handler(VehiculoError)

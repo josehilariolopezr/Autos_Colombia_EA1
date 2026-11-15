@@ -29,3 +29,10 @@ export interface EstadoVehiculo {
   esta_dentro: boolean;
   estancia: (Estancia & { celda: Celda; operador_entrada: OperadorEntrada }) | null;
 }
+export interface EstanciaReciente {
+  id: number;
+  placa: string;
+  celda: string;
+  entrada: string;
+  salida: string | null;
+}

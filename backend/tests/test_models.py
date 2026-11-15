@@ -1,12 +1,15 @@
 import importlib.util
+from io import StringIO
 from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
+from alembic import command
+from alembic.config import Config
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable
 
-from app.models import Base, Celda, Operador, Vehiculo
+from app.models import Base, Celda, Novedad, Operador, Vehiculo
 
 
 def test_normalizes_unique_identifiers_on_creation_and_assignment():
@@ -55,6 +58,34 @@ def test_required_columns_and_identity():
         assert all(not column.nullable for column in table.columns)
         assert isinstance(table.c.id.type, sa.BigInteger)
         assert table.c.id.identity.always is True
+
+
+def test_novedad_model_constraints_and_foreign_keys():
+    table = Novedad.__table__
+    assert table.name == "novedad"
+    assert isinstance(table.c.id.type, sa.BigInteger) and table.c.id.identity.always
+    assert table.c.fecha_registro.type.timezone
+    assert str(table.c.fecha_registro.server_default.arg) == "now()"
+    assert {column.name for column in table.columns if column.nullable} == {"estancia_id"}
+    assert {foreign_key.parent.name: foreign_key.ondelete for foreign_key in table.foreign_keys} == {
+        "vehiculo_id": "RESTRICT", "estancia_id": "SET NULL", "operador_id": "RESTRICT",
+    }
+    assert {index.name for index in table.indexes} == {"ix_novedad_vehiculo_id"}
+    with pytest.raises(ValueError):
+        Novedad(descripcion=" \t")
+
+
+def test_novedad_migration_only_creates_new_table():
+    config_path = Path(__file__).resolve().parents[1] / "alembic.ini"
+    output = StringIO()
+    command.upgrade(Config(str(config_path), output_buffer=output), "0005:0006", sql=True)
+    sql = output.getvalue()
+    assert "CREATE TABLE novedad" in sql
+    assert "CREATE INDEX ix_novedad_vehiculo_id ON novedad (vehiculo_id)" in sql
+    assert "REFERENCES vehiculo (id) ON DELETE RESTRICT" in sql
+    assert "REFERENCES estancia (id) ON DELETE SET NULL" in sql
+    assert "REFERENCES operador (id) ON DELETE RESTRICT" in sql
+    assert "ALTER TABLE cliente" not in sql and "DROP TABLE" not in sql
 
 
 def test_migration_matches_models_without_connecting(monkeypatch):

@@ -12,7 +12,7 @@ class FakeSession:
         cell_available = SimpleNamespace(id=1, codigo="A-01", tipo="Automóvil", estado="ACTIVA")
         cell_occupied = SimpleNamespace(id=2, codigo="A-02", tipo="Automóvil", estado="ACTIVA")
         stay = SimpleNamespace(entrada=datetime(2026, 10, 22, 12, tzinfo=timezone.utc))
-        vehicle = SimpleNamespace(placa="ABC123", tipo="AUTOMOVIL")
+        vehicle = SimpleNamespace(placa="ABC123", tipo="AUTOMOVIL", cliente=None)
         return SimpleNamespace(all=lambda: [(cell_available, None, None), (cell_occupied, stay, vehicle)])
 
     def scalar(self, _statement):
@@ -41,8 +41,8 @@ def test_dashboard_returns_counts_and_cell_occupancy():
         "celdas_disponibles": 1,
         "celdas_ocupadas": 1,
         "estancias_activas": 1,
-        "mensualidades_activas": None,
-        "recaudacion_hoy": None,
+        "mensualidades_activas": 2,
+        "recaudacion_hoy": 2,
         "variacion_recaudacion_pct": None,
         "variacion_ocupadas_24h": -1,
         "celdas": [
