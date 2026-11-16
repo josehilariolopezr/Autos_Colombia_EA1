@@ -12,7 +12,7 @@ import { ErrorApi } from '../models/vehiculo';
 const nonBlank: ValidatorFn = (control) =>
   typeof control.value === 'string' && control.value.trim() ? null : { required: true };
 type Field = 'codigo' | 'tipo';
-type ZoneFilter = 'TODAS' | 'A' | 'M' | 'P';
+type ZoneFilter = 'TODAS' | 'A' | 'M' | 'C';
 type StateFilter = 'TODAS' | 'LIBRE' | 'OCUPADA' | 'MANTENIMIENTO';
 
 @Component({
@@ -161,7 +161,7 @@ export class Celdas {
 
   zone(cell: Celda): string {
     const prefix = cell.codigo.split('-', 1)[0]?.toUpperCase();
-    return prefix === 'A' || prefix === 'M' || prefix === 'P' ? prefix : 'OTRA';
+    return prefix === 'A' || prefix === 'M' || prefix === 'C' ? prefix : 'OTRA';
   }
 
   private estadoParaFiltro(cell: Celda): StateFilter | null {

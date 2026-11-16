@@ -8,7 +8,7 @@ export interface DashboardCelda {
   id: number;
   codigo: string;
   tipo: string;
-  zona: 'A' | 'M' | 'P' | 'OTRA';
+  zona: 'A' | 'M' | 'C' | 'OTRA';
   estado: 'DISPONIBLE' | 'OCUPADA' | 'MANTENIMIENTO';
   mensualidad: boolean | null;
   vehiculo: DashboardVehiculo | null;

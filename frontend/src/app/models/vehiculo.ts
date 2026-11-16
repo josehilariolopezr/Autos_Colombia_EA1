@@ -1,5 +1,15 @@
 export const TIPOS_VEHICULO = ['MOTO', 'AUTOMOVIL', 'CAMIONETA'] as const;
 export type TipoVehiculo = (typeof TIPOS_VEHICULO)[number];
+export const TARIFAS_MENSUALES: Record<TipoVehiculo, number> = {
+  MOTO: 30000,
+  AUTOMOVIL: 50000,
+  CAMIONETA: 60000,
+};
+export const ETIQUETAS_TIPO_VEHICULO: Record<TipoVehiculo, string> = {
+  MOTO: 'Moto',
+  AUTOMOVIL: 'Automóvil',
+  CAMIONETA: 'Camioneta',
+};
 export interface ClienteVehiculo {
   id: number;
   codigo: string;

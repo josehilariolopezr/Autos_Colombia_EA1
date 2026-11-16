@@ -17,7 +17,7 @@ CELDAS_FIGMA = [
     ("M-01", "VRD-59F", (7, 58)), ("M-02", "QRS-82D", None),
     ("M-03", None, None), ("M-04", "DFK-31H", (10, 40)),
     ("M-05", None, None), ("M-06", None, None), ("M-07", "APL-70G", None),
-    ("M-08", None, None), ("P-01", None, None), ("P-02", "TUX-872", (6, 42)),
+    ("M-08", None, None), ("C-01", None, None), ("C-02", "TUX-872", (6, 42)),
 ]
 CLIENTES_FIGMA = [
     ("CL-0248", "Laura Méndez", "315 442 9081", "KLV-103", 20),
@@ -31,7 +31,7 @@ CLIENTES_FIGMA = [
 def sample_rows() -> list[tuple[str, str | None, tuple[int, int] | None]]:
     rows = list(CELDAS_FIGMA)
     occupied = 1
-    for zone, first, last in (("A", 9, 26), ("M", 9, 26), ("P", 3, 10)):
+    for zone, first, last in (("A", 9, 26), ("M", 9, 26), ("C", 3, 10)):
         for number in range(first, last + 1):
             plate = f"DMO-{occupied:03d}" if occupied <= 15 else None
             entry = (11, occupied) if plate else None
@@ -127,14 +127,14 @@ def seed() -> dict[str, int]:
         for code, plate, _ in rows:
             zone = code[0]
             if code not in cells:
-                cell = Celda(codigo=code, tipo={"A": "AUTOMOVIL", "M": "MOTO", "P": "PESADO"}[zone])
+                cell = Celda(codigo=code, tipo={"A": "AUTOMOVIL", "M": "MOTO", "C": "CAMIONETA"}[zone])
                 session.add(cell)
                 cells[code] = cell
                 counts["celdas"] += 1
             has_open_stay = session.scalar(
                 select(Estancia.id).where(Estancia.celda_id == cells[code].id, Estancia.salida.is_(None))
             )
-            if code == "P-01" and not has_open_stay and cells[code].estado == "ACTIVA":
+            if code == "C-01" and not has_open_stay and cells[code].estado == "ACTIVA":
                 cells[code].estado = "MANTENIMIENTO"
             if plate and plate not in vehicles:
                 vehicle = Vehiculo(
@@ -142,7 +142,7 @@ def seed() -> dict[str, int]:
                     color="Gris",
                     modelo=2024,
                     marca="Muestra",
-                    tipo={"A": "AUTOMOVIL", "M": "MOTO", "P": "CAMIONETA"}[zone],
+                    tipo={"A": "AUTOMOVIL", "M": "MOTO", "C": "CAMIONETA"}[zone],
                 )
                 session.add(vehicle)
                 vehicles[plate] = vehicle

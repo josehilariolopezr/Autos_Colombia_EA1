@@ -25,7 +25,7 @@ En producción, configura estas rutas de API en el servidor web; `ng build` no i
 En **Clientes y novedades**, usa **Asociar placa** para vincular un vehículo libre
 con un cliente que aún no tenga vehículo. Después usa **Registrar mensualidad**,
 selecciona operador y medio de pago, y confirma para guardar el pago e imprimir el
-tiquete. El valor es $30.000 para motos y $60.000 para automóviles y camionetas;
+tiquete. El valor es $30.000 para motos, $50.000 para automóviles y $60.000 para camionetas;
 el vencimiento y el estado se actualizan al recargar la lista. El pago requiere la
 migración `0004` del backend aplicada en PostgreSQL. Usa **Ver tiquetes** para
 consultar pagos guardados y volver a abrir o imprimir cualquier comprobante sin

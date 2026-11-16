@@ -18,7 +18,7 @@ class CeldaDashboard(BaseModel):
     id: int
     codigo: str
     tipo: str
-    zona: Literal["A", "M", "P", "OTRA"]
+    zona: Literal["A", "M", "C", "OTRA"]
     estado: Literal["DISPONIBLE", "OCUPADA", "MANTENIMIENTO"]
     mensualidad: bool | None = None
     vehiculo: VehiculoEnCelda | None = None

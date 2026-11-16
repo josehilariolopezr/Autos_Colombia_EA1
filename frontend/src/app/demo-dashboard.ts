@@ -18,7 +18,7 @@ function demoCell(
   estado: DashboardCelda['estado'],
   options: { plate?: string; monthly?: boolean; enteredAt?: [number, number] } = {},
 ): DashboardCelda {
-  const tipo = zona === 'M' ? 'MOTO' : zona === 'P' ? 'CAMIONETA' : 'AUTOMOVIL';
+  const tipo = zona === 'M' ? 'MOTO' : zona === 'C' ? 'CAMIONETA' : 'AUTOMOVIL';
   return {
     id: 0,
     codigo,
@@ -50,15 +50,15 @@ export function createDemoDashboard(): DashboardResumen {
     demoCell('M-06', 'M', 'DISPONIBLE'),
     demoCell('M-07', 'M', 'OCUPADA', { plate: 'APL-70G', monthly: true }),
     demoCell('M-08', 'M', 'DISPONIBLE'),
-    demoCell('P-01', 'P', 'MANTENIMIENTO'),
-    demoCell('P-02', 'P', 'OCUPADA', { plate: 'TUX-872', enteredAt: [6, 42] }),
+    demoCell('C-01', 'C', 'MANTENIMIENTO'),
+    demoCell('C-02', 'C', 'OCUPADA', { plate: 'TUX-872', enteredAt: [6, 42] }),
   ];
 
   const generated: DashboardCelda[] = [];
   const additional: Array<{ zone: DashboardCelda['zona']; first: number; last: number }> = [
     { zone: 'A', first: 9, last: 26 },
     { zone: 'M', first: 9, last: 26 },
-    { zone: 'P', first: 3, last: 10 },
+    { zone: 'C', first: 3, last: 10 },
   ];
   let occupiedIndex = 1;
   for (const group of additional) {

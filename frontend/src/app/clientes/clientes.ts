@@ -3,7 +3,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { EMPTY, Observable, expand, reduce } from 'rxjs';
 import { ApiService } from '../services/api.service';
-import { Cliente, ClienteCrear, PagoMensualidad, Vehiculo } from '../models/vehiculo';
+import {
+  Cliente,
+  ClienteCrear,
+  ETIQUETAS_TIPO_VEHICULO,
+  PagoMensualidad,
+  TARIFAS_MENSUALES,
+  Vehiculo,
+} from '../models/vehiculo';
 import { OperadoresService } from '../services/operadores.service';
 import { Operador } from '../models/operador';
 import { TicketData, TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
@@ -195,8 +202,14 @@ export class Clientes {
     return value ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota' }).format(new Date(`${value}T12:00:00`)) : '—';
   }
 
-  protected monthlyValue(client: Cliente): number {
-    return client.tipo_vehiculo === 'MOTO' ? 30000 : 60000;
+  protected monthlyValue(client: Cliente): number | null {
+    const tipo = client.tipo_vehiculo;
+    return tipo === null ? null : TARIFAS_MENSUALES[tipo];
+  }
+
+  protected vehicleTypeLabel(client: Cliente): string {
+    const tipo = client.tipo_vehiculo;
+    return tipo === null ? 'Tipo no definido' : ETIQUETAS_TIPO_VEHICULO[tipo];
   }
 
   protected formatCop(value: number): string {

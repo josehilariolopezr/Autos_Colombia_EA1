@@ -6,7 +6,7 @@ import { createDemoDashboard } from '../demo-dashboard';
 import { ApiService } from '../services/api.service';
 
 type CellFilter = 'TODAS' | 'LIBRES' | 'OCUPADAS' | 'MENSUALIDAD' | 'MANTENIMIENTO';
-type ZoneFilter = 'TODAS' | 'A' | 'M' | 'P' | 'OTRA';
+type ZoneFilter = 'TODAS' | 'A' | 'M' | 'C' | 'OTRA';
 
 @Component({
   selector: 'app-home',

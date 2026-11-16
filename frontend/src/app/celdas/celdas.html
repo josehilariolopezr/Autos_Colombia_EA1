@@ -25,7 +25,7 @@
     </div>
     <div class="filters-toolbar" aria-label="Filtros de celdas">
       <div class="filter-controls">
-        <label class="search-box"><span aria-hidden="true">⌕</span><input class="form-input" type="text" placeholder="Buscar por código (A-01, M-03)..." [ngModel]="busquedaCodigo()" (ngModelChange)="actualizarBusqueda($event)" /></label>
+        <label class="search-box"><span aria-hidden="true">⌕</span><input class="form-input" type="text" placeholder="Buscar por código (A-01, M-03, C-01)..." [ngModel]="busquedaCodigo()" (ngModelChange)="actualizarBusqueda($event)" /></label>
         @if (filtrosActivos) { <button type="button" class="btn-outline" (click)="limpiarFiltros()">Limpiar</button> }
       </div>
       <div class="filter-group" role="group" aria-label="Filtrar por zona">
@@ -33,7 +33,7 @@
         <button type="button" class="pill" [class.active]="filtroZona() === 'TODAS'" (click)="seleccionarZona('TODAS')">Todas</button>
         <button type="button" class="pill" [class.active]="filtroZona() === 'A'" (click)="seleccionarZona('A')">A</button>
         <button type="button" class="pill" [class.active]="filtroZona() === 'M'" (click)="seleccionarZona('M')">M</button>
-        <button type="button" class="pill" [class.active]="filtroZona() === 'P'" (click)="seleccionarZona('P')">P</button>
+        <button type="button" class="pill" [class.active]="filtroZona() === 'C'" (click)="seleccionarZona('C')">C</button>
       </div>
       <div class="filter-group" role="group" aria-label="Filtrar por estado">
         <span class="filter-label">Estado</span>

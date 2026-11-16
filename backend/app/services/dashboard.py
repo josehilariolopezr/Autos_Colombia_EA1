@@ -65,7 +65,7 @@ def get_dashboard_summary(session: Session) -> DashboardResumen:
                 id=cell.id,
                 codigo=cell.codigo,
                 tipo=cell.tipo,
-                zona=prefix if prefix in {"A", "M", "P"} else "OTRA",
+                zona=prefix if prefix in {"A", "M", "C"} else "OTRA",
                 estado="MANTENIMIENTO" if maintenance else "OCUPADA" if occupied else "DISPONIBLE",
                 mensualidad=(
                     bool(vehicle.cliente and vehicle.cliente.vencimiento and vehicle.cliente.vencimiento >= hoy)

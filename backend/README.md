@@ -22,9 +22,9 @@ en otra copia, primero configura `.env` y ejecuta desde `backend`:
 ```
 
 La revisión `0004` agrega `pago_mensualidad`. `POST /clientes/{id}/mensualidades`
-registra el pago según el tipo del vehículo: $30.000 COP para motos y $60.000
-COP para automóviles y camionetas. Guarda operador, vehículo, medio y período cubierto, y
-actualiza el vencimiento del cliente dentro de la misma transacción. El cuerpo
+registra el pago según el tipo del vehículo: $30.000 COP para motos, $50.000
+COP para automóviles y $60.000 COP para camionetas. Guarda operador, vehículo,
+medio y período cubierto, y actualiza el vencimiento del cliente dentro de la misma transacción. El cuerpo
 requiere `placa`, `operador_id` y `metodo_pago` (`EFECTIVO`, `TARJETA` o
 `TRANSFERENCIA`). La pantalla de clientes ofrece esta operación e imprime el
 tiquete devuelto por la API. Para revisar la migración sin aplicarla:
@@ -35,6 +35,12 @@ tiquete devuelto por la API. Para revisar la migración sin aplicarla:
 
 La migración no se aplica automáticamente; ejecútala solo después de revisar el
 SQL y decidir actualizar el esquema local.
+
+Las zonas de celdas son `M` para motos, `A` para automóviles y `C` para camionetas.
+La revisión `0009` renombra los códigos existentes `P-...` a `C-...` y el tipo
+`PESADO` a `CAMIONETA`, sin cambiar los ids de celda ni sus estancias. Si ya existe
+un código `C-...` equivalente a un código `P-...`, la migración se detiene sin
+sobrescribir celdas.
 
 Las placas del mockup son datos ficticios para desarrollo. La Vista general abre
 el control de salida con la placa seleccionada; allí la ficha consulta de
@@ -323,9 +329,9 @@ try {
 
 La revisión `0005` agrega el estado `ACTIVA`/`MANTENIMIENTO`. Después de iniciar
 PostgreSQL, aplica las revisiones con `.venv\Scripts\python.exe -m alembic -c alembic.ini upgrade head`
-desde `backend`. Para cargar la celda de muestra P-01 en mantenimiento, ejecuta
+desde `backend`. Para cargar la celda de muestra C-01 en mantenimiento, ejecuta
 `.venv\Scripts\python.exe seed_demo.py`;
-el script conserva registros y omite poner P-01 en mantenimiento si tiene una
+el script conserva registros y omite poner C-01 en mantenimiento si tiene una
 estancia activa. La gestión de celdas permite alternar el estado y el tablero
 muestra las celdas en gris. La aplicación todavía no cuenta con autenticación ni
 roles; por eso el control visual no constituye un permiso exclusivo de administrador.

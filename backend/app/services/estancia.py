@@ -21,6 +21,13 @@ class EstanciaError(Exception):
         self.detail = detail
 
 
+ZONAS_POR_TIPO = {
+    "MOTO": ("M",),
+    "AUTOMOVIL": ("A",),
+    "CAMIONETA": ("C",),
+}
+
+
 def transaccion(operation):
     """Una transacción por solicitud; materializa la respuesta antes del commit."""
     @wraps(operation)
@@ -85,8 +92,7 @@ class ServicioEstancia:
         if celda.estado == "MANTENIMIENTO":
             raise EstanciaError(409, "La celda está en mantenimiento y no se puede asignar.")
         zona_celda = celda.codigo.split("-", maxsplit=1)[0].upper()
-        zonas_compatibles = {"MOTO": {"M"}, "AUTOMOVIL": {"A", "P"}, "CAMIONETA": {"A", "P"}}
-        if zona_celda not in zonas_compatibles[vehiculo.tipo]:
+        if zona_celda not in ZONAS_POR_TIPO[vehiculo.tipo]:
             raise EstanciaError(422, "La celda seleccionada no es compatible con el tipo de vehículo.")
         operador = self._operador(data.operador_id)
         if self.session.scalar(select(Estancia.id).where(
@@ -105,7 +111,7 @@ class ServicioEstancia:
         return EstanciaRespuesta.model_validate(estancia)
 
     def sugerir_celda(self, tipo: str) -> Celda:
-        zonas = {"MOTO": ("M",), "AUTOMOVIL": ("A", "P"), "CAMIONETA": ("A", "P")}[tipo]
+        zonas = ZONAS_POR_TIPO[tipo]
         statement = (
             select(Celda)
             .where(Celda.estado == "ACTIVA")

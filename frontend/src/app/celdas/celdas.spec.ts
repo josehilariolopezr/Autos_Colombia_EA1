@@ -32,7 +32,7 @@ describe('Gestión de celdas', () => {
     component.celdas.set([
       cell,
       { id: 2, codigo: 'M-03', tipo: 'MOTO', estado: 'ACTIVA' },
-      { id: 3, codigo: 'P-01', tipo: 'CAMIONETA', estado: 'MANTENIMIENTO' },
+      { id: 3, codigo: 'C-01', tipo: 'CAMIONETA', estado: 'MANTENIMIENTO' },
     ]);
     component.dashboard.set({
       ...dashboard,
@@ -49,6 +49,10 @@ describe('Gestión de celdas', () => {
     expect(component.currentPage()).toBe(1);
     expect(component.celdasFiltradas().map((item) => item.codigo)).toEqual(['M-03']);
     expect(component.celdasPaginadas()).toEqual(component.celdasFiltradas());
+    component.actualizarBusqueda('');
+    component.seleccionarEstado('TODAS');
+    component.seleccionarZona('C');
+    expect(component.celdasFiltradas().map((item) => item.codigo)).toEqual(['C-01']);
     component.limpiarFiltros();
     expect(component.celdasFiltradas()).toHaveLength(3);
   });

@@ -18,6 +18,20 @@ class ClienteError(Exception):
         self.detail = detail
 
 
+TARIFAS_MENSUALES = {
+    "MOTO": 30000,
+    "AUTOMOVIL": 50000,
+    "CAMIONETA": 60000,
+}
+
+
+def tarifa_mensual(tipo_vehiculo: str) -> int:
+    try:
+        return TARIFAS_MENSUALES[tipo_vehiculo]
+    except KeyError:
+        raise ClienteError(422, "Tipo de vehículo no válido para una mensualidad.") from None
+
+
 def create_client(session: Session, data: ClienteCrear) -> ClienteRespuesta:
     try:
         with session.begin():
@@ -132,7 +146,7 @@ def register_monthly_payment(
             hoy = datetime.now(ZoneInfo("America/Bogota")).date()
             inicio = max(cliente.vencimiento, hoy) if cliente.vencimiento else hoy
             fin = _sumar_mes(inicio)
-            valor = 30000 if vehiculo.tipo == "MOTO" else 60000
+            valor = tarifa_mensual(vehiculo.tipo)
             pago = PagoMensualidad(
                 cliente_id=cliente.id,
                 operador_id=operador.id,

@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../services/api.service';
+import { TARIFAS_MENSUALES } from '../models/vehiculo';
 
 @Component({
   selector: 'app-configuracion',
@@ -15,9 +16,9 @@ export class Configuracion {
   protected readonly status = signal<'cargando' | 'disponible' | 'error'>('cargando');
   protected readonly checkedAt = signal('');
   protected readonly tarifas = [
-    { tipo: 'Moto', value: 30000 },
-    { tipo: 'Automóvil', value: 60000 },
-    { tipo: 'Camioneta', value: 60000 },
+    { tipo: 'Moto', value: TARIFAS_MENSUALES.MOTO },
+    { tipo: 'Automóvil', value: TARIFAS_MENSUALES.AUTOMOVIL },
+    { tipo: 'Camioneta', value: TARIFAS_MENSUALES.CAMIONETA },
   ];
 
   constructor() { this.checkStatus(); }
