@@ -364,6 +364,9 @@
         </button>
       </div>
       <div class="modal-body">
+        @if (deactivateModalError()) {
+          <div class="alert alert-danger" role="alert">{{ deactivateModalError() }}</div>
+        }
         <p>
           ¿Está seguro de que desea
           <strong>{{ targetUser()?.activo ? 'desactivar' : 'activar' }}</strong>

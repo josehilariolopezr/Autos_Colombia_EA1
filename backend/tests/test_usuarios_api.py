@@ -154,6 +154,101 @@ def test_administrador_desactivacion_logica(admin_user, admin_headers):
         app.dependency_overrides.pop(get_session, None)
 
 
+def test_no_se_puede_desactivar_al_ultimo_administrador(admin_user, admin_headers):
+    session = MagicMock()
+    session.get.return_value = admin_user
+    session.scalar.side_effect = [admin_user, 1]
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            response = client.delete("/usuarios/1", headers=admin_headers)
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "No es posible desactivar ni quitar el rol al único administrador activo del sistema."
+    )
+    assert admin_user.activo is True
+    session.commit.assert_not_called()
+
+
+def test_no_se_puede_quitar_rol_al_ultimo_administrador(admin_user, admin_headers):
+    session = MagicMock()
+    session.get.return_value = admin_user
+    session.scalar.side_effect = [admin_user, 1]
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                "/usuarios/1",
+                json={"rol": "OPERADOR"},
+                headers=admin_headers,
+            )
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == (
+        "No es posible desactivar ni quitar el rol al único administrador activo del sistema."
+    )
+    assert admin_user.rol == "ADMINISTRADOR"
+    session.commit.assert_not_called()
+
+
+def test_no_se_puede_desactivar_ultimo_admin_por_actualizacion(admin_user, admin_headers):
+    session = MagicMock()
+    session.get.return_value = admin_user
+    session.scalar.side_effect = [admin_user, 1]
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            response = client.patch(
+                "/usuarios/1",
+                json={"activo": False},
+                headers=admin_headers,
+            )
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+    assert response.status_code == 409
+    assert admin_user.activo is True
+    session.commit.assert_not_called()
+
+
+def test_se_puede_desactivar_admin_si_hay_otro_activo(admin_user, admin_headers):
+    session = MagicMock()
+    session.get.return_value = admin_user
+    session.scalar.side_effect = [admin_user, 2]
+    session.refresh.side_effect = lambda user: None
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            response = client.delete("/usuarios/1", headers=admin_headers)
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+    assert response.status_code == 200
+    assert admin_user.activo is False
+    session.commit.assert_called_once()
+
+
 def test_operador_no_puede_crear_ni_editar_celdas(operador_user, operador_headers):
     session = MagicMock()
     session.get.return_value = operador_user

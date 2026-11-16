@@ -1,5 +1,6 @@
 from functools import wraps
 
+from fastapi import HTTPException
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -49,6 +50,23 @@ def find_user(session: Session, user_id: int) -> Usuario:
     if user is None:
         raise UsuarioError(404, "Usuario no encontrado.")
     return user
+
+
+def _validar_no_ultimo_admin_activo(db: Session, usuario: Usuario) -> None:
+    if usuario.rol == "ADMINISTRADOR" and usuario.activo is True:
+        admin_count = db.scalar(
+            select(func.count())
+            .select_from(Usuario)
+            .where(
+                Usuario.rol == "ADMINISTRADOR",
+                Usuario.activo.is_(True),
+            )
+        ) or 0
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=409,
+                detail="No es posible desactivar ni quitar el rol al único administrador activo del sistema.",
+            )
 
 
 @database_operation
@@ -125,6 +143,11 @@ def update_user(session: Session, user_id: int, data: UsuarioActualizar) -> Usua
         raise UsuarioError(404, "Usuario no encontrado.")
 
     changes = data.model_dump(exclude_unset=True)
+    if (
+        changes.get("rol") not in (None, "ADMINISTRADOR")
+        or changes.get("activo") is False
+    ):
+        _validar_no_ultimo_admin_activo(session, user)
 
     if "correo" in changes:
         correo_norm = changes["correo"].lower().strip()
@@ -164,4 +187,12 @@ def update_user(session: Session, user_id: int, data: UsuarioActualizar) -> Usua
 
 @database_operation
 def deactivate_user(session: Session, user_id: int) -> Usuario:
-    return update_user(session, user_id, UsuarioActualizar(activo=False))
+    user = session.scalar(select(Usuario).where(Usuario.id == user_id).with_for_update())
+    if user is None:
+        raise UsuarioError(404, "Usuario no encontrado.")
+
+    _validar_no_ultimo_admin_activo(session, user)
+    user.activo = False
+    session.commit()
+    session.refresh(user)
+    return user

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RolUsuario, Usuario, UsuarioActualizar, UsuarioCrear } from '../models/usuario';
 import { UsuariosService } from '../services/usuarios.service';
@@ -16,6 +16,9 @@ export class Usuarios implements OnInit {
   private readonly usuariosService = inject(UsuariosService);
 
   readonly usuarios = signal<Usuario[]>([]);
+  readonly cantidadAdminsActivos = computed(
+    () => this.usuarios().filter((user) => user.rol === 'ADMINISTRADOR' && user.activo).length
+  );
   readonly total = signal(0);
   readonly offset = signal(0);
   readonly limit = signal(10);
@@ -38,6 +41,7 @@ export class Usuarios implements OnInit {
   // Deactivate modal state
   readonly showDeactivateModal = signal(false);
   readonly targetUser = signal<Usuario | null>(null);
+  readonly deactivateModalError = signal<string | null>(null);
 
   readonly userForm = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -228,13 +232,29 @@ export class Usuarios implements OnInit {
   }
 
   confirmToggleStatus(user: Usuario) {
+    this.error.set(null);
+    if (user.activo && this.esUltimoAdminActivo(user)) {
+      this.error.set('No es posible desactivar el único administrador activo del sistema.');
+      return;
+    }
+
+    this.deactivateModalError.set(null);
     this.targetUser.set(user);
     this.showDeactivateModal.set(true);
+  }
+
+  esUltimoAdminActivo(usuario: Usuario): boolean {
+    return (
+      usuario.rol === 'ADMINISTRADOR' &&
+      usuario.activo &&
+      this.cantidadAdminsActivos() <= 1
+    );
   }
 
   closeDeactivateModal() {
     this.showDeactivateModal.set(false);
     this.targetUser.set(null);
+    this.deactivateModalError.set(null);
   }
 
   executeToggleStatus() {
@@ -251,6 +271,12 @@ export class Usuarios implements OnInit {
         this.loadUsers();
       },
       error: (err) => {
+        if (err.status === 409) {
+          this.deactivateModalError.set(
+            err.error?.detail || 'No se pudo modificar el estado del usuario.'
+          );
+          return;
+        }
         this.closeDeactivateModal();
         this.error.set(
           err.error?.detail || 'Error al modificar el estado del usuario.'
