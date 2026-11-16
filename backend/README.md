@@ -333,13 +333,23 @@ desde `backend`. Para cargar la celda de muestra C-01 en mantenimiento, ejecuta
 `.venv\Scripts\python.exe seed_demo.py`;
 el script conserva registros y omite poner C-01 en mantenimiento si tiene una
 estancia activa. La gestión de celdas permite alternar el estado y el tablero
-muestra las celdas en gris. La aplicación todavía no cuenta con autenticación ni
-roles; por eso el control visual no constituye un permiso exclusivo de administrador.
+muestra las celdas en gris.
 
 La revisión `0006` agrega la tabla `novedad` sin alterar las tablas existentes.
 El mismo comando `alembic upgrade head` aplica también esta revisión. El endpoint
 `/novedades` lista por fecha descendente y permite filtrar por `placa` o
 `vehiculo_id`; el POST valida sus referencias antes de guardar.
+
+## Acceso por roles
+
+Las rutas de la API requieren autenticación, excepto `/health` y el inicio de
+sesión. El rol `OPERADOR` puede usar el tablero, el control de acceso y clientes
+y novedades; no puede consultar reportes ni las pantallas de gestión. El rol
+`ADMINISTRADOR` tiene acceso a esas funciones de gestión. En la API, celdas,
+usuarios y operadores se reservan al administrador, salvo la consulta del
+catálogo de operadores usado en las operaciones. El operador puede consultar
+vehículos para el módulo de clientes y modificar únicamente su asociación con
+un cliente.
 
 Las pruebas habituales no requieren PostgreSQL; la integración se omite por defecto:
 

@@ -7,7 +7,7 @@ import pytest
 from app.auth import create_access_token, hash_password
 from app.database import get_session
 from app.main import app
-from app.models import Celda, Estancia, Usuario
+from app.models import Celda, Estancia, Usuario, Vehiculo
 
 
 @pytest.fixture
@@ -164,6 +164,9 @@ def test_operador_no_puede_crear_ni_editar_celdas(operador_user, operador_header
     app.dependency_overrides[get_session] = override_session
     try:
         with TestClient(app) as client:
+            get_res = client.get("/celdas", headers=operador_headers)
+            assert get_res.status_code == 403
+
             post_res = client.post(
                 "/celdas",
                 json={"codigo": "Z-99", "tipo": "Automóvil"},
@@ -177,6 +180,72 @@ def test_operador_no_puede_crear_ni_editar_celdas(operador_user, operador_header
                 headers=operador_headers,
             )
             assert patch_res.status_code == 403
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+
+def test_operador_no_puede_abrir_rutas_de_gestion(operador_user, operador_headers):
+    session = MagicMock()
+    session.get.return_value = operador_user
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            assert client.get("/vehiculos/1", headers=operador_headers).status_code == 403
+            assert client.get("/operadores/1", headers=operador_headers).status_code == 403
+            assert client.get("/estancias/recientes", headers=operador_headers).status_code == 403
+            assert client.post(
+                "/operadores",
+                json={"nombre": "Nuevo", "telefono": "3001234567"},
+                headers=operador_headers,
+            ).status_code == 403
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+
+def test_operador_solo_puede_modificar_asociacion_de_vehiculo(
+    operador_user, operador_headers, monkeypatch
+):
+    vehicle = Vehiculo(
+        id=11,
+        placa="ABC123",
+        color="Azul",
+        modelo=2024,
+        marca="Toyota",
+        tipo="AUTOMOVIL",
+        cliente_id=None,
+        activo=True,
+    )
+    session = MagicMock()
+    session.get.return_value = operador_user
+
+    def override_session():
+        yield session
+
+    def update_vehicle(_session, _id, data):
+        assert data.model_fields_set == {"cliente_id"}
+        return vehicle
+
+    monkeypatch.setattr("app.routers.vehiculos.service.update_vehicle", update_vehicle)
+    app.dependency_overrides[get_session] = override_session
+    try:
+        with TestClient(app) as client:
+            denied = client.patch(
+                "/vehiculos/11",
+                json={"color": "Negro"},
+                headers=operador_headers,
+            )
+            assert denied.status_code == 403
+
+            allowed = client.patch(
+                "/vehiculos/11",
+                json={"cliente_id": None},
+                headers=operador_headers,
+            )
+            assert allowed.status_code == 200
     finally:
         app.dependency_overrides.pop(get_session, None)
 

@@ -3,12 +3,17 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_session
 from app.schemas.cliente import ClienteActualizar, ClienteCrear, ClienteRespuesta, ClientesPagina
 from app.schemas.mensualidad import MensualidadPagoCrear, MensualidadPagoRespuesta
 from app.services.cliente import create_client, list_clients, list_monthly_payments, register_monthly_payment, update_client
 
-router = APIRouter(prefix="/clientes", tags=["Clientes"])
+router = APIRouter(
+    prefix="/clientes",
+    tags=["Clientes"],
+    dependencies=[Depends(get_current_user)],
+)
 DatabaseSession = Annotated[Session, Depends(get_session)]
 
 

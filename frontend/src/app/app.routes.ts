@@ -29,19 +29,22 @@ export const routes: Routes = [
   {
     path: 'gestion/operadores',
     title: 'Operadores | Autos Colombia',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMINISTRADOR'] },
     loadComponent: () => import('./operadores/operadores').then((m) => m.Operadores),
   },
   {
     path: 'gestion/celdas',
     title: 'Celdas | Autos Colombia',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMINISTRADOR'] },
     loadComponent: () => import('./celdas/celdas').then((m) => m.Celdas),
   },
   {
     path: 'gestion/vehiculos',
     title: 'Vehículos | Autos Colombia',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMINISTRADOR'] },
     loadComponent: () => import('./vehiculos/vehiculos').then((m) => m.Vehiculos),
   },
   {
@@ -54,13 +57,15 @@ export const routes: Routes = [
   {
     path: 'reportes',
     title: 'Reportes | Autos Colombia',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMINISTRADOR'] },
     loadComponent: () => import('./reportes/reportes').then((m) => m.Reportes),
   },
   {
     path: 'configuracion',
     title: 'Configuración | Autos Colombia',
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['ADMINISTRADOR'] },
     loadComponent: () => import('./configuracion/configuracion').then((m) => m.Configuracion),
   },
   { path: '**', redirectTo: '' },

@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user, require_role
 from app.database import get_session
 from app.schemas.celda import CeldaRespuesta
 from app.models import Celda, Estancia, Vehiculo
@@ -14,7 +15,11 @@ from app.schemas.estancia import EntradaCrear, SalidaCrear, EstanciaRespuesta, E
 from app.schemas.vehiculo import Placa
 from app.services.estancia import EstanciaError, ServicioEstancia
 
-router = APIRouter(prefix="/estancias", tags=["Estancias"])
+router = APIRouter(
+    prefix="/estancias",
+    tags=["Estancias"],
+    dependencies=[Depends(get_current_user)],
+)
 DatabaseSession = Annotated[Session, Depends(get_session)]
 
 
@@ -49,7 +54,11 @@ def consultar(placa: Placa, session: DatabaseSession) -> EstadoVehiculoRespuesta
     return ServicioEstancia(session).consultar(placa)
 
 
-@router.get("/recientes", response_model=list[EstanciaReciente])
+@router.get(
+    "/recientes",
+    response_model=list[EstanciaReciente],
+    dependencies=[Depends(require_role(["ADMINISTRADOR"]))],
+)
 def recientes(
     session: DatabaseSession,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,

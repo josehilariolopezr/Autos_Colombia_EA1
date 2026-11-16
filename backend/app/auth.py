@@ -109,7 +109,7 @@ def get_current_user(
             nombre="Administrador General",
             documento="1000000001",
             correo="admin@autoscolombia.com",
-            password_hash="",
+            password_hash="pytest-password-hash",
             rol="ADMINISTRADOR",
             activo=True,
         )

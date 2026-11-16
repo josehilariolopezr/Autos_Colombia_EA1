@@ -571,7 +571,9 @@ prefijos y ceros iniciales, sin imponer un formato o una longitud máxima adicio
 al tipo TEXT del modelo. Se permiten nombres y teléfonos repetidos. Una relación
 que impida borrar produce 409 sin borrar registros relacionados; se revierten
 transacciones fallidas. Los errores generales de base de datos producen 503 con
-un mensaje público, sin detalles internos. Operador no incorpora autenticación.
+un mensaje público, sin detalles internos. La gestión de operadores y cambios
+administrativos se restringen al rol **ADMINISTRADOR**; la consulta del catálogo
+de operadores sigue disponible para usuarios autenticados durante las operaciones.
 
 ### Comandos PowerShell con el entorno existente
 

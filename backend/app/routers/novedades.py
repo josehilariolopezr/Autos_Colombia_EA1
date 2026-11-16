@@ -3,11 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_session
 from app.schemas.novedad import NovedadCreate, NovedadOut
 from app.services.novedad import create_novedad, list_novedades
 
-router = APIRouter(prefix="/novedades", tags=["Novedades"])
+router = APIRouter(
+    prefix="/novedades",
+    tags=["Novedades"],
+    dependencies=[Depends(get_current_user)],
+)
 DatabaseSession = Annotated[Session, Depends(get_session)]
 
 

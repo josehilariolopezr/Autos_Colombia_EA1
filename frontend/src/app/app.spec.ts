@@ -57,6 +57,17 @@ describe('Navegación', () => {
     const navItems = (fixture.nativeElement as HTMLElement).querySelectorAll('a.nav-item');
     const hasUsersLink = Array.from(navItems).some((el) => el.textContent?.includes('Usuarios'));
     expect(hasUsersLink).toBe(false);
+    expect(Array.from(navItems).map((el) => el.textContent?.trim())).toEqual([
+      'Vista general',
+      'Vehículos activos',
+      'Clientes y novedades',
+    ]);
+    const mobileLinks = (fixture.nativeElement as HTMLElement).querySelectorAll('.mobile-menu nav a');
+    expect(Array.from(mobileLinks).map((el) => el.getAttribute('href'))).toEqual([
+      '/',
+      '/control-acceso',
+      '/clientes',
+    ]);
 
     // Cambiar a ADMINISTRADOR
     authService.currentUser.set({

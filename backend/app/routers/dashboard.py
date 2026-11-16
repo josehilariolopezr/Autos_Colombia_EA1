@@ -3,11 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user
 from app.database import get_session
 from app.schemas.dashboard import DashboardResumen
 from app.services.dashboard import get_dashboard_summary
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter(
+    prefix="/dashboard",
+    tags=["Dashboard"],
+    dependencies=[Depends(get_current_user)],
+)
 DatabaseSession = Annotated[Session, Depends(get_session)]
 
 

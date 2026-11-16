@@ -8,12 +8,16 @@ from app.database import get_session
 from app.schemas.celda import CeldaActualizar, CeldaCrear, CeldaRespuesta, CeldasPagina
 from app.services import celda as service
 
-router = APIRouter(prefix="/celdas", tags=["Celdas"])
+router = APIRouter(
+    prefix="/celdas",
+    tags=["Celdas"],
+    dependencies=[Depends(require_role(["ADMINISTRADOR"]))],
+)
 DatabaseSession = Annotated[Session, Depends(get_session)]
 CellId = Annotated[int, Path(ge=1, le=9223372036854775807)]
 
 
-@router.post("", response_model=CeldaRespuesta, status_code=201, dependencies=[Depends(require_role(["ADMINISTRADOR"]))])
+@router.post("", response_model=CeldaRespuesta, status_code=201)
 def create(data: CeldaCrear, session: DatabaseSession):
     return service.create_cell(session, data)
 
@@ -32,12 +36,12 @@ def get_one(id: CellId, session: DatabaseSession):
     return service.get_cell(session, id)
 
 
-@router.patch("/{id}", response_model=CeldaRespuesta, dependencies=[Depends(require_role(["ADMINISTRADOR"]))])
+@router.patch("/{id}", response_model=CeldaRespuesta)
 def update(id: CellId, data: CeldaActualizar, session: DatabaseSession):
     return service.update_cell(session, id, data)
 
 
-@router.delete("/{id}", response_model=CeldaRespuesta, dependencies=[Depends(require_role(["ADMINISTRADOR"]))])
+@router.delete("/{id}", response_model=CeldaRespuesta)
 def deactivate(id: CellId, session: DatabaseSession) -> CeldaRespuesta:
     return service.deactivate_cell(session, id)
 
