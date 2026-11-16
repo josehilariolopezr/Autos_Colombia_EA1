@@ -232,3 +232,49 @@ class Novedad(Base):
     @validates("descripcion")
     def validate_descripcion(self, key: str, value: str) -> str:
         return required_text(value, key)
+
+
+class Usuario(Base):
+    __tablename__ = "usuario"
+    __table_args__ = (
+        UniqueConstraint("documento", name="uq_usuario_documento"),
+        UniqueConstraint("correo", name="uq_usuario_correo"),
+        CheckConstraint("nombre ~ '[^[:space:]]'", name="ck_usuario_nombre_no_vacio"),
+        CheckConstraint("documento ~ '[^[:space:]]'", name="ck_usuario_documento_no_vacio"),
+        CheckConstraint("correo ~ '[^[:space:]]'", name="ck_usuario_correo_no_vacio"),
+        CheckConstraint("password_hash ~ '[^[:space:]]'", name="ck_usuario_password_hash_no_vacio"),
+        CheckConstraint("rol IN ('ADMINISTRADOR', 'OPERADOR')", name="ck_usuario_rol"),
+        Index("ix_usuario_correo", "correo"),
+        Index("ix_usuario_documento", "documento"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    nombre: Mapped[str] = mapped_column(Text, nullable=False)
+    documento: Mapped[str] = mapped_column(Text, nullable=False)
+    correo: Mapped[str] = mapped_column(Text, nullable=False)
+    password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    rol: Mapped[str] = mapped_column(Text, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
+    operador_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("operador.id", name="fk_usuario_operador", ondelete="SET NULL"), nullable=True
+    )
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    operador: Mapped[Operador | None] = relationship()
+
+    @validates("nombre", "documento", "correo", "password_hash")
+    def validate_text(self, key: str, value: str) -> str:
+        value = required_text(value, key)
+        if key == "correo":
+            return value.lower()
+        return value
+
+    @validates("rol")
+    def validate_rol(self, key: str, value: str) -> str:
+        value = required_text(value, key).upper()
+        if value not in {"ADMINISTRADOR", "OPERADOR"}:
+            raise ValueError("rol debe ser ADMINISTRADOR u OPERADOR.")
+        return value
+

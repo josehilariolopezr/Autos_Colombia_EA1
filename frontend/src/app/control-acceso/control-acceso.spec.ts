@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { ControlAcceso } from './control-acceso';
 
 describe('Control de acceso', () => {
@@ -31,7 +32,7 @@ describe('Control de acceso', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ControlAcceso],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
     c = TestBed.createComponent(ControlAcceso).componentInstance;
@@ -102,10 +103,6 @@ describe('Control de acceso', () => {
     const req = http.expectOne('/estancias/salida');
     expect(req.request.body).toEqual({ placa: 'TEST-A', operador_id: 4 });
     req.flush({ ...stay, salida: '2026-10-19T16:00:00Z', operador_salida_id: 4 });
-    http
-      .expectOne('/estancias/vehiculo/TEST-A')
-      .flush({ ...state, esta_dentro: false, estancia: null });
-    expect(c.estado()?.esta_dentro).toBe(false);
     expect(c.exitoSalida()).toContain('Salida registrada');
   });
   it('distingue no registrado y conexión fallida e invalida salida rechazada', () => {

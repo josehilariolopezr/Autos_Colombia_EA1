@@ -43,7 +43,7 @@ def sample_rows() -> list[tuple[str, str | None, tuple[int, int] | None]]:
 
 def seed() -> dict[str, int]:
     """Inserta solo registros de muestra ausentes; no actualiza ni borra filas."""
-    counts = {"celdas": 0, "vehiculos": 0, "clientes": 0, "estancias": 0, "operadores": 0}
+    counts = {"celdas": 0, "vehiculos": 0, "clientes": 0, "estancias": 0, "operadores": 0, "usuarios": 0}
     now = datetime.now(BOGOTA)
     with Session(get_engine()) as session, session.begin():
         cells = {row.codigo: row for row in session.scalars(select(Celda)).all()}
@@ -60,6 +60,36 @@ def seed() -> dict[str, int]:
             session.add(operator)
             session.flush()
             counts["operadores"] += 1
+
+        from app.auth import hash_password
+        from app.models import Usuario
+
+        admin_user = session.scalar(select(Usuario).where(Usuario.correo == "admin@autoscolombia.com"))
+        if admin_user is None:
+            admin_user = Usuario(
+                nombre="Administrador General",
+                documento="1000000001",
+                correo="admin@autoscolombia.com",
+                password_hash=hash_password("Admin123*"),
+                rol="ADMINISTRADOR",
+                activo=True,
+            )
+            session.add(admin_user)
+            counts["usuarios"] += 1
+
+        operador_user = session.scalar(select(Usuario).where(Usuario.correo == "operador@autoscolombia.com"))
+        if operador_user is None:
+            operador_user = Usuario(
+                nombre="Operador de Turno",
+                documento="1000000002",
+                correo="operador@autoscolombia.com",
+                password_hash=hash_password("Operador123*"),
+                rol="OPERADOR",
+                operador_id=operator.id if operator else None,
+                activo=True,
+            )
+            session.add(operador_user)
+            counts["usuarios"] += 1
 
         # Completa los cinco propietarios visibles en Figma y 23 clientes adicionales
         # para los otros vehículos de muestra y el total de 28 clientes del mockup.

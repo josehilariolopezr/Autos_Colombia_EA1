@@ -7,7 +7,7 @@ describe('TicketIngresoComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ TicketIngresoComponent ]
+      imports: [ TicketIngresoComponent ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(TicketIngresoComponent);

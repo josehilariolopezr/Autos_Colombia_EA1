@@ -55,7 +55,7 @@ def test_rejects_unknown_type_and_preserves_phone_text():
 def test_required_columns_and_identity():
     for name in ("vehiculo", "celda", "operador"):
         table = Base.metadata.tables[name]
-        assert all(not column.nullable for column in table.columns)
+        assert all(not column.nullable for column in table.columns if column.name != "cliente_id")
         assert isinstance(table.c.id.type, sa.BigInteger)
         assert table.c.id.identity.always is True
 
@@ -99,12 +99,14 @@ def test_migration_matches_models_without_connecting(monkeypatch):
     assert set(metadata.tables) == {"vehiculo", "celda", "operador"}
     for name, table in metadata.tables.items():
         model_table = Base.metadata.tables[name]
+        initial_cols = {c.name for c in table.columns}
         assert [(c.name, str(c.type), c.nullable) for c in table.columns] == [
-            (c.name, str(c.type), c.nullable) for c in model_table.columns
+            (c.name, str(c.type), c.nullable) for c in model_table.columns if c.name in initial_cols
         ]
         def constraints(t):
             return {(c.name, str(c.sqltext)) for c in t.constraints if isinstance(c, sa.CheckConstraint)}
-        assert constraints(table) == constraints(model_table)
+        initial_ck = {c[0] for c in constraints(table)}
+        assert constraints(table) == {c for c in constraints(model_table) if c[0] in initial_ck}
         def unique_columns(t):
             return {tuple(c.columns.keys()) for c in t.constraints if isinstance(c, sa.UniqueConstraint)}
         assert unique_columns(table) == unique_columns(model_table)

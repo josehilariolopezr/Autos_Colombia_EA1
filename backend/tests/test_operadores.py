@@ -62,7 +62,7 @@ def test_database_conflicts_roll_back_and_hide_details(api, sqlstate, status):
     assert "PRIVATE" not in result.text
     assert isinstance(result.json()["detail"], str)
     session.rollback.assert_called_once()
-    session.delete.assert_called_once_with(session.get.return_value)
+    assert session.get.return_value.activo is False
 
 
 def test_database_failure_rolls_back_and_is_generic(api):

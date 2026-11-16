@@ -71,10 +71,14 @@ def update_cell(session: Session, cell_id: int, data: CeldaActualizar) -> Celda:
     if cell is None:
         raise CeldaError(404, "Celda no encontrada.")
     changes = data.model_dump(exclude_unset=True)
-    if changes.get("estado") == "MANTENIMIENTO":
+    if changes.get("estado") == "MANTENIMIENTO" or "codigo" in changes or "tipo" in changes:
         from app.models import Estancia
         if session.scalar(select(Estancia.id).where(Estancia.celda_id == cell_id, Estancia.salida.is_(None))):
-            raise CeldaError(409, "Cierre la estancia activa antes de poner la celda en mantenimiento.")
+            if changes.get("estado") == "MANTENIMIENTO":
+                raise CeldaError(409, "Cierre la estancia activa antes de poner la celda en mantenimiento.")
+            if "codigo" in changes:
+                raise CeldaError(409, "No se puede modificar el código de una celda con una estancia activa.")
+            raise CeldaError(409, "No se puede modificar el tipo de una celda con una estancia activa.")
     for key, value in changes.items():
         setattr(cell, key, value)
     session.commit()

@@ -17,12 +17,17 @@
 .nav-item.active svg { color: #42d0a1; }
 .nav-item.unavailable { opacity: .75; cursor: default; }
 .sidebar-footer { margin-top: auto; border-top: 1px solid #ffffff17; padding-top: 18px; }
-.operator-card { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; padding: 6px 5px; }
+.operator-card { display: grid; grid-template-columns: 34px 1fr 32px; gap: 10px; align-items: center; padding: 6px 5px; }
 .avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: #083e31; background: #a7ead4; font-size: 11px; font-weight: 800; }
+.avatar-admin { background: #93c5fd; color: #1e3a8a; }
 .operator-copy { display: flex; flex-direction: column; min-width: 0; }
-.operator-copy strong { font-size: 11px; white-space: nowrap; }
-.operator-copy small { margin-top: 3px; color: #8095ad; font-size: 9px; }
-.operator-card>svg { display: none; }
+.operator-copy strong { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.operator-copy small { margin-top: 3px; color: #8095ad; font-size: 9px; text-transform: uppercase; font-weight: 700; }
+.logout-btn { background: none; border: none; padding: 6px; color: #8fa0b5; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: all .2s ease; }
+.logout-btn:hover { background: #ffffff14; color: #ff6b6b; }
+.logout-btn svg { width: 17px; height: 17px; stroke: currentColor; stroke-width: 2; fill: none; }
+.auth-wrapper { min-height: 100vh; }
+.mobile-logout { display: block; width: 100%; text-align: left; background: none; border: none; border-top: 1px solid #edf2f7; padding: 10px; color: #e02424; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .content-shell { margin-left: 248px; width: calc(100% - 248px); min-width: 0; }
 .topbar { height: 76px; padding: 0 34px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #e3e9ef; }
 .location-block { display: flex; flex-direction: column; gap: 5px; }

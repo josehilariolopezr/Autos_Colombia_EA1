@@ -62,3 +62,27 @@ def load_database_settings() -> DatabaseSettings:
         password=values["DB_PASSWORD"],
         connect_timeout=positive_integer("DB_CONNECT_TIMEOUT", 60),
     )
+
+
+@dataclass(frozen=True)
+class JWTSettings:
+    secret_key: str = field(repr=False)
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 1440
+
+
+def load_jwt_settings() -> JWTSettings:
+    values = {**dotenv_values(ENV_FILE, encoding="utf-8-sig", interpolate=False), **os.environ}
+    secret_key = (values.get("JWT_SECRET_KEY") or "").strip()
+    if not secret_key or secret_key.startswith("CAMBIAR_"):
+        secret_key = "autos-colombia-dev-secret-key-change-in-prod-2026"
+    algorithm = (values.get("JWT_ALGORITHM") or "").strip() or "HS256"
+    try:
+        expire_minutes = int(values.get("JWT_EXPIRE_MINUTES") or "1440")
+    except (ValueError, TypeError):
+        expire_minutes = 1440
+    return JWTSettings(
+        secret_key=secret_key,
+        algorithm=algorithm,
+        access_token_expire_minutes=expire_minutes,
+    )

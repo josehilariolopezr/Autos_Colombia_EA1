@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { Home as App } from './home';
 
 describe('Home dashboard', () => {
@@ -17,7 +18,7 @@ describe('Home dashboard', () => {
   };
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [App], providers: [provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()] }).compileComponents();
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(App);
     fixture.detectChanges();

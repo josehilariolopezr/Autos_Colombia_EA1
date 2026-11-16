@@ -17,6 +17,10 @@ from app.routers.clientes import router as clientes_router
 from app.services.cliente import ClienteError
 from app.routers.novedades import router as novedades_router
 from app.services.novedad import NovedadError
+from app.routers.auth import router as auth_router
+from app.services.auth import AuthError
+from app.routers.usuarios import router as usuarios_router
+from app.services.usuario import UsuarioError
 
 app = FastAPI(title="Autos Colombia API")
 app.add_middleware(
@@ -25,6 +29,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(auth_router)
+app.include_router(usuarios_router)
 app.include_router(vehiculos_router)
 app.include_router(celdas_router)
 app.include_router(operadores_router)
@@ -41,9 +47,21 @@ app.include_router(novedades_router)
 @app.exception_handler(DashboardError)
 @app.exception_handler(ClienteError)
 @app.exception_handler(NovedadError)
+@app.exception_handler(AuthError)
+@app.exception_handler(UsuarioError)
 async def entity_error_handler(
     request,
-    error: VehiculoError | CeldaError | OperadorError | EstanciaError | DashboardError | ClienteError | NovedadError,
+    error: (
+        VehiculoError
+        | CeldaError
+        | OperadorError
+        | EstanciaError
+        | DashboardError
+        | ClienteError
+        | NovedadError
+        | AuthError
+        | UsuarioError
+    ),
 ) -> JSONResponse:
     return JSONResponse(status_code=error.status_code, content={"detail": error.detail})
 

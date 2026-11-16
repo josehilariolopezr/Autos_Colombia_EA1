@@ -43,6 +43,7 @@ describe('Gestión de vehículos', () => {
     tipo: 'MOTO',
     cliente_id: null,
     cliente: null,
+    activo: true,
   };
   const flushList = (items: Vehiculo[] = [], total = items.length, offset = 0) => {
     http
@@ -129,32 +130,16 @@ describe('Gestión de vehículos', () => {
     expect(component.success()).toContain('actualizado');
   });
 
-  it('confirma con placa, permite cancelar y elimina una sola vez', () => {
+  it('permite cambiar el estado de un vehículo', () => {
     flushList([vehicle]);
-    component.confirmDelete(vehicle);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alertdialog"]').textContent).toContain(
-      'ABC123',
-    );
-    component.cancel();
-    http.expectNone((request) => request.method === 'DELETE');
-    component.confirmDelete(vehicle);
-    component.remove();
-    component.remove();
-    http
-      .expectOne({ method: 'DELETE', url: '/vehiculos/1' })
-      .flush(null, { status: 204, statusText: 'No Content' });
-    flushList();
-    expect(component.success()).toContain('eliminado');
-  });
-
-  it('informa conflicto de eliminación sin retirar el registro', () => {
-    flushList([vehicle]);
-    component.confirmDelete(vehicle);
-    component.remove();
-    http.expectOne('/vehiculos/1').flush({}, { status: 409, statusText: 'Conflict' });
-    expect(component.actionError()).toContain('registros relacionados');
-    expect(component.items()).toEqual([vehicle]);
+    component.requestStatusChange(vehicle);
+    expect(component.pendingStatus()).toEqual(vehicle);
+    component.confirmStatusChange();
+    const req = http.expectOne({ method: 'PATCH', url: '/vehiculos/1' });
+    expect(req.request.body).toEqual({ activo: false });
+    req.flush({ ...vehicle, activo: false });
+    flushList([{ ...vehicle, activo: false }]);
+    expect(component.success()).toContain('desactivado');
   });
 
   it('informa que un vehículo ya no existe', () => {
@@ -190,9 +175,9 @@ describe('Gestión de vehículos', () => {
     flushList([vehicle], 11);
     component.load(10);
     flushList([{ ...vehicle, id: 11 }], 11, 10);
-    component.confirmDelete({ ...vehicle, id: 11 });
-    component.remove();
-    http.expectOne('/vehiculos/11').flush(null, { status: 204, statusText: 'No Content' });
+    component.requestStatusChange({ ...vehicle, id: 11 });
+    component.confirmStatusChange();
+    http.expectOne({ method: 'PATCH', url: '/vehiculos/11' }).flush({ ...vehicle, id: 11, activo: false });
     flushList([], 10, 10);
     flushList([vehicle], 10, 0);
     expect(component.page()).toBe(1);

@@ -1,0 +1,394 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-titles">
+      <span class="caption">ADMINISTRACIÓN DEL SISTEMA</span>
+      <h1>Gestión de Usuarios y Accesos</h1>
+      <p class="subtitle">Administre roles, credenciales y vinculaciones operativas de Autos Colombia</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <span>Nuevo Usuario</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Notifications -->
+  @if (success()) {
+    <div class="alert alert-success" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+        <polyline points="22 4 12 14.01 9 11.01" />
+      </svg>
+      <span>{{ success() }}</span>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Filters Bar -->
+  <div class="filters-card">
+    <div class="search-field">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Buscar por nombre, documento o correo..."
+        [value]="searchTerm()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+
+    <div class="select-group">
+      <div class="select-field">
+        <label for="filter-rol">Rol:</label>
+        <select
+          id="filter-rol"
+          [value]="selectedRol()"
+          (change)="onRolChange($any($event.target).value)"
+        >
+          <option value="TODOS">Todos los roles</option>
+          <option value="ADMINISTRADOR">Administrador</option>
+          <option value="OPERADOR">Operador</option>
+        </select>
+      </div>
+
+      <div class="select-field">
+        <label for="filter-activo">Estado:</label>
+        <select
+          id="filter-activo"
+          [value]="selectedActivo()"
+          (change)="onActivoChange($any($event.target).value)"
+        >
+          <option value="TODOS">Todos los estados</option>
+          <option value="ACTIVO">Activos</option>
+          <option value="INACTIVO">Inactivos</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table -->
+  <div class="table-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Cargando usuarios...</p>
+      </div>
+    } @else if (usuarios().length === 0) {
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <h3>No se encontraron usuarios</h3>
+        <p>Intente modificar los filtros o registre un nuevo usuario en el sistema.</p>
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Documento</th>
+            <th>Rol</th>
+            <th>Operador Asoc.</th>
+            <th>Estado</th>
+            <th>Fecha Registro</th>
+            <th class="text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of usuarios(); track u.id) {
+            <tr [class.row-inactive]="!u.activo">
+              <td>
+                <div class="user-cell">
+                  <div class="user-avatar" [class.avatar-admin]="u.rol === 'ADMINISTRADOR'">
+                    {{ getInitials(u.nombre) }}
+                  </div>
+                  <div class="user-info">
+                    <strong>{{ u.nombre }}</strong>
+                    <small>{{ u.correo }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="doc-badge">{{ u.documento }}</span>
+              </td>
+              <td>
+                @if (u.rol === 'ADMINISTRADOR') {
+                  <span class="role-badge role-admin">Administrador</span>
+                } @else {
+                  <span class="role-badge role-operator">Operador</span>
+                }
+              </td>
+              <td>
+                @if (u.operador_id) {
+                  <span class="op-link">OP-{{ u.operador_id }}</span>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+              <td>
+                @if (u.activo) {
+                  <span class="status-pill status-active">Activo</span>
+                } @else {
+                  <span class="status-pill status-inactive">Inactivo</span>
+                }
+              </td>
+              <td>
+                <span class="date-text">{{ u.creado_en | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </td>
+              <td class="text-right">
+                <div class="action-buttons">
+                  <button
+                    type="button"
+                    class="btn-icon"
+                    (click)="openEditModal(u)"
+                    title="Editar usuario"
+                    aria-label="Editar usuario"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon"
+                    [class.btn-icon-danger]="u.activo"
+                    [class.btn-icon-success]="!u.activo"
+                    (click)="confirmToggleStatus(u)"
+                    [title]="u.activo ? 'Desactivar usuario' : 'Activar usuario'"
+                    [attr.aria-label]="u.activo ? 'Desactivar usuario' : 'Activar usuario'"
+                  >
+                    @if (u.activo) {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22 4 12 14.01 9 11.01" />
+                      </svg>
+                    }
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
+    <!-- Pagination Footer -->
+    <div class="pagination-footer">
+      <span class="pagination-info">
+        Mostrando {{ total() === 0 ? 0 : offset() + 1 }} a
+        {{ offset() + usuarios().length }} de {{ total() }} usuarios
+      </span>
+      <div class="pagination-controls">
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="offset() === 0"
+          (click)="prevPage()"
+        >
+          Anterior
+        </button>
+        <button
+          type="button"
+          class="btn-page"
+          [disabled]="offset() + limit() >= total()"
+          (click)="nextPage()"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Create / Edit -->
+@if (showModal()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>{{ isEditing() ? 'Editar Usuario' : 'Nuevo Usuario' }}</h2>
+          <p>{{ isEditing() ? 'Actualice la información del usuario' : 'Complete los datos para crear un nuevo usuario' }}</p>
+        </div>
+        <button type="button" class="close-btn" (click)="closeModal()" aria-label="Cerrar modal">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      @if (modalError()) {
+        <div class="alert alert-danger modal-alert" role="alert">
+          <span>{{ modalError() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="userForm" (ngSubmit)="submitUser()" novalidate>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="user-nombre">Nombre completo *</label>
+            <input
+              id="user-nombre"
+              type="text"
+              formControlName="nombre"
+              placeholder="ej. María Morales"
+            />
+            @if (userForm.get('nombre')?.touched && userForm.get('nombre')?.hasError('required')) {
+              <span class="field-error">El nombre es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="user-documento">Documento de identidad *</label>
+            <input
+              id="user-documento"
+              type="text"
+              formControlName="documento"
+              placeholder="ej. 1020304050"
+            />
+            @if (userForm.get('documento')?.touched && userForm.get('documento')?.hasError('required')) {
+              <span class="field-error">El documento es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="user-correo">Correo electrónico *</label>
+            <input
+              id="user-correo"
+              type="email"
+              formControlName="correo"
+              placeholder="ej. usuario@autoscolombia.com"
+            />
+            @if (userForm.get('correo')?.touched && userForm.get('correo')?.hasError('required')) {
+              <span class="field-error">El correo es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="user-rol">Rol del sistema *</label>
+            <select id="user-rol" formControlName="rol">
+              <option value="OPERADOR">Operador de Turno</option>
+              <option value="ADMINISTRADOR">Administrador General</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="user-operador">ID Operador Vinculado (opcional)</label>
+            <input
+              id="user-operador"
+              type="number"
+              formControlName="operador_id"
+              placeholder="ej. 1"
+            />
+            <span class="field-hint">Vincule a un operador existente para rastrear turnos.</span>
+          </div>
+
+          <div class="form-group">
+            <label for="user-password">
+              Contraseña {{ isEditing() ? '(opcional)' : '*' }}
+            </label>
+            <input
+              id="user-password"
+              type="password"
+              formControlName="password"
+              [placeholder]="isEditing() ? 'Dejar en blanco para no cambiar' : 'Mínimo 6 caracteres'"
+            />
+            @if (userForm.get('password')?.touched && userForm.get('password')?.hasError('required')) {
+              <span class="field-error">La contraseña es obligatoria.</span>
+            }
+            @if (userForm.get('password')?.hasError('minlength')) {
+              <span class="field-error">Debe contener al menos 6 caracteres.</span>
+            }
+          </div>
+        </div>
+
+        @if (isEditing()) {
+          <div class="form-checkbox">
+            <label>
+              <input type="checkbox" formControlName="activo" />
+              <span>Usuario activo en el sistema</span>
+            </label>
+          </div>
+        }
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()" [disabled]="submitting()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+            @if (submitting()) {
+              <span class="spinner-sm"></span>
+              <span>Guardando...</span>
+            } @else {
+              <span>{{ isEditing() ? 'Guardar Cambios' : 'Crear Usuario' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Confirmation Modal: Activate/Deactivate -->
+@if (showDeactivateModal() && targetUser()) {
+  <div class="modal-backdrop" (click)="closeDeactivateModal()">
+    <div class="modal-content modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ targetUser()?.activo ? 'Desactivar Usuario' : 'Activar Usuario' }}</h2>
+        <button type="button" class="close-btn" (click)="closeDeactivateModal()">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>
+          ¿Está seguro de que desea
+          <strong>{{ targetUser()?.activo ? 'desactivar' : 'activar' }}</strong>
+          al usuario <strong>{{ targetUser()?.nombre }}</strong>?
+        </p>
+        <p class="modal-hint">
+          @if (targetUser()?.activo) {
+            El usuario no podrá iniciar sesión en el sistema mientras se encuentre inactivo. Sus datos operativos históricos se conservarán intactos.
+          } @else {
+            El usuario recuperará el acceso al sistema con sus credenciales habituales.
+          }
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDeactivateModal()">Cancelar</button>
+        <button
+          type="button"
+          class="btn"
+          [class.btn-danger]="targetUser()?.activo"
+          [class.btn-success]="!targetUser()?.activo"
+          (click)="executeToggleStatus()"
+        >
+          {{ targetUser()?.activo ? 'Sí, Desactivar' : 'Sí, Activar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
