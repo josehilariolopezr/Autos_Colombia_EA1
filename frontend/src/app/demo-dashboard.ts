@@ -18,7 +18,7 @@ function demoCell(
   estado: DashboardCelda['estado'],
   options: { plate?: string; monthly?: boolean; enteredAt?: [number, number] } = {},
 ): DashboardCelda {
-  const tipo = zona === 'M' ? 'MOTO' : zona === 'P' ? 'PESADO' : 'AUTOMOVIL';
+  const tipo = zona === 'M' ? 'MOTO' : zona === 'P' ? 'CAMIONETA' : 'AUTOMOVIL';
   return {
     id: 0,
     codigo,
@@ -26,9 +26,7 @@ function demoCell(
     zona,
     estado,
     mensualidad: options.monthly ?? false,
-    vehiculo: options.plate
-      ? { placa: options.plate, tipo: tipo === 'PESADO' ? 'CAMIONETA' : tipo }
-      : null,
+    vehiculo: options.plate ? { placa: options.plate, tipo } : null,
     entrada: options.enteredAt ? entryAt(...options.enteredAt) : null,
   };
 }

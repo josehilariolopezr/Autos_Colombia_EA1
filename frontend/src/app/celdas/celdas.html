@@ -23,14 +23,24 @@
       <div><h2>Inventario de celdas</h2><p>Disponibilidad y estado del parqueadero</p></div>
       <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
     </div>
-    <div class="toolbar">
-      <label class="search-box"><span aria-hidden="true">⌕</span><input #search type="search" placeholder="Buscar por código de celda..." [value]="searchTerm()" (input)="setSearch(search.value)" /></label>
-      <div class="filter-pills" role="group" aria-label="Filtrar celdas por zona o estado">
-        <button type="button" [class.selected]="filter() === 'TODAS'" (click)="setFilter('TODAS')">Todas <span>{{ total() }}</span></button>
-        <button type="button" [class.selected]="filter() === 'A'" (click)="setFilter('A')">Zona A - Carros</button>
-        <button type="button" [class.selected]="filter() === 'M'" (click)="setFilter('M')">Zona M - Motos</button>
-        <button type="button" [class.selected]="filter() === 'P'" (click)="setFilter('P')">Zona P - Camionetas</button>
-        <button type="button" [class.selected]="filter() === 'MANTENIMIENTO'" (click)="setFilter('MANTENIMIENTO')">Mantenimiento</button>
+    <div class="filters-toolbar" aria-label="Filtros de celdas">
+      <div class="filter-controls">
+        <label class="search-box"><span aria-hidden="true">⌕</span><input class="form-input" type="text" placeholder="Buscar por código (A-01, M-03)..." [ngModel]="busquedaCodigo()" (ngModelChange)="actualizarBusqueda($event)" /></label>
+        @if (filtrosActivos) { <button type="button" class="btn-outline" (click)="limpiarFiltros()">Limpiar</button> }
+      </div>
+      <div class="filter-group" role="group" aria-label="Filtrar por zona">
+        <span class="filter-label">Zona</span>
+        <button type="button" class="pill" [class.active]="filtroZona() === 'TODAS'" (click)="seleccionarZona('TODAS')">Todas</button>
+        <button type="button" class="pill" [class.active]="filtroZona() === 'A'" (click)="seleccionarZona('A')">A</button>
+        <button type="button" class="pill" [class.active]="filtroZona() === 'M'" (click)="seleccionarZona('M')">M</button>
+        <button type="button" class="pill" [class.active]="filtroZona() === 'P'" (click)="seleccionarZona('P')">P</button>
+      </div>
+      <div class="filter-group" role="group" aria-label="Filtrar por estado">
+        <span class="filter-label">Estado</span>
+        <button type="button" class="pill" [class.active]="filtroEstado() === 'TODAS'" (click)="seleccionarEstado('TODAS')">Todas</button>
+        <button type="button" class="pill" [class.active]="filtroEstado() === 'LIBRE'" (click)="seleccionarEstado('LIBRE')">Libre</button>
+        <button type="button" class="pill" [class.active]="filtroEstado() === 'OCUPADA'" (click)="seleccionarEstado('OCUPADA')">Ocupada</button>
+        <button type="button" class="pill" [class.active]="filtroEstado() === 'MANTENIMIENTO'" (click)="seleccionarEstado('MANTENIMIENTO')">Mantenimiento</button>
       </div>
     </div>
 
@@ -38,10 +48,10 @@
       <p class="empty" role="status">Cargando celdas…</p>
     } @else if (listError()) {
       <p class="notice error" role="alert">{{ listError() }} <button type="button" (click)="load()">Reintentar</button></p>
-    } @else if (!filteredItems().length) {
-      <div class="empty"><h3>No hay celdas para mostrar</h3><p>Ajusta el texto de búsqueda o el filtro seleccionado.</p></div>
+    } @else if (celdasFiltradas().length === 0) {
+      <div class="empty"><h3>No hay coincidencias</h3><p>No encontramos celdas con el código, zona y estado seleccionados.</p></div>
     } @else {
-      <div class="table-scroll">
+      <div class="table-wrap">
         <table>
           <caption class="sr-only">Inventario de celdas</caption>
           <thead><tr><th scope="col">CÓDIGO</th><th scope="col">ZONA</th><th scope="col">TIPO VEHÍCULO</th><th scope="col">ESTADO OPERATIVO</th><th scope="col">OCUPACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
@@ -59,7 +69,7 @@
           </tbody>
         </table>
       </div>
-      <nav class="pagination" aria-label="Paginación de celdas"><span>Mostrando {{ visibleStart() }}–{{ visibleEnd() }} de {{ filteredItems().length }} celdas</span><div><button type="button" (click)="offset.set(offset() - limit)" [disabled]="offset() === 0">Anterior</button><span class="page-number">{{ page() }} / {{ pages() }}</span><button type="button" (click)="offset.set(offset() + limit)" [disabled]="offset() + limit >= filteredItems().length">Siguiente</button></div></nav>
+      <nav class="pagination" aria-label="Paginación de celdas"><span>Mostrando {{ visibleStart() }}–{{ visibleEnd() }} de {{ celdasFiltradas().length }} celdas</span><div><button type="button" (click)="cambiarPagina(-1)" [disabled]="currentPage() === 1">Anterior</button><span class="page-number">{{ currentPage() }} / {{ totalPages() }}</span><button type="button" (click)="cambiarPagina(1)" [disabled]="currentPage() >= totalPages()">Siguiente</button></div></nav>
     }
   </section>
 

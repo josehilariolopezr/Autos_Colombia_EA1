@@ -1,6 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { EMPTY, Observable, expand, reduce } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { Cliente, ClienteCrear, PagoMensualidad, Vehiculo } from '../models/vehiculo';
 import { OperadoresService } from '../services/operadores.service';
@@ -8,7 +9,6 @@ import { Operador } from '../models/operador';
 import { TicketData, TicketIngresoComponent } from '../componentes/ticket-ingreso/ticket-ingreso';
 import { NovedadesService } from '../services/novedades.service';
 import { Novedad } from '../models/novedad';
-import { Vehiculo as VehiculoRegistro } from '../models/vehiculo';
 
 @Component({ selector: 'app-clientes', imports: [RouterLink, TicketIngresoComponent], templateUrl: './clientes.html', styleUrl: './clientes.css' })
 export class Clientes {
@@ -36,6 +36,11 @@ export class Clientes {
   protected readonly vehiclesLoading = signal(false);
   protected readonly associationBusy = signal(false);
   protected readonly associationError = signal('');
+  protected readonly unlinkingClient = signal<Cliente | null>(null);
+  protected readonly unlinkTarget = signal<{ client: Cliente; vehicle: Vehiculo } | null>(null);
+  protected readonly unlinkLoading = signal(false);
+  protected readonly unlinkBusy = signal(false);
+  protected readonly unlinkError = signal('');
   protected readonly historyClient = signal<Cliente | null>(null);
   protected readonly paymentHistory = signal<PagoMensualidad[]>([]);
   protected readonly historyLoading = signal(false);
@@ -64,7 +69,7 @@ export class Clientes {
   protected readonly novedadesLoading = signal(false);
   protected readonly novedadesError = signal('');
   protected readonly showNovedad = signal(false);
-  protected readonly novedadVehicles = signal<VehiculoRegistro[]>([]);
+  protected readonly novedadVehicles = signal<Vehiculo[]>([]);
   protected readonly novedadOperators = signal<Operador[]>([]);
   protected readonly novedadVehicleId = signal<number | null>(null);
   protected readonly novedadOperatorId = signal<number | null>(null);
@@ -77,10 +82,26 @@ export class Clientes {
   protected load(): void {
     this.loading.set(true);
     this.loadError.set('');
-    this.api.clients(0, 100, this.includeInactive()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (page) => { this.clients.set(page.items); this.loading.set(false); },
+    const includeInactive = this.includeInactive();
+    this.api.clients(0, 100, includeInactive).pipe(
+      expand((page) => page.items.length > 0 && page.offset + page.items.length < page.total
+        ? this.api.clients(page.offset + page.items.length, 100, includeInactive)
+        : EMPTY),
+      reduce((all, page) => all.concat(page.items), [] as Cliente[]),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (clients) => { this.clients.set(clients); this.loading.set(false); },
       error: () => { this.loadError.set('No pudimos cargar los clientes desde la API.'); this.loading.set(false); },
     });
+  }
+
+  private loadAllVehicles(includeInactive = false): Observable<Vehiculo[]> {
+    return this.api.list(0, 100, includeInactive).pipe(
+      expand((page) => page.items.length > 0 && page.offset + page.items.length < page.total
+        ? this.api.list(page.offset + page.items.length, 100, includeInactive)
+        : EMPTY),
+      reduce((all, page) => all.concat(page.items), [] as Vehiculo[]),
+    );
   }
 
   protected selectTab(tab: 'clientes' | 'novedades'): void {
@@ -108,8 +129,8 @@ export class Clientes {
     this.novedadVehicles.set([]);
     this.novedadOperators.set([]);
     this.showNovedad.set(true);
-    this.api.list(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (page) => this.novedadVehicles.set(page.items),
+    this.loadAllVehicles().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (vehicles) => this.novedadVehicles.set(vehicles),
       error: () => this.novedadError.set('No se pudo cargar el catálogo de vehículos.'),
     });
     this.operatorsApi.list(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
@@ -235,17 +256,59 @@ export class Clientes {
     this.selectedVehicleId.set(null);
     this.associationError.set('');
     this.vehiclesLoading.set(true);
-    this.api.list(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (page) => {
-        this.availableVehicles.set(page.items.filter((vehicle) => vehicle.cliente_id === null));
+    this.loadAllVehicles().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (vehicles) => {
+        this.availableVehicles.set(vehicles.filter((vehicle) => vehicle.cliente_id === null));
         this.vehiclesLoading.set(false);
-        if (!page.items.some((vehicle) => vehicle.cliente_id === null)) {
+        if (!vehicles.some((vehicle) => vehicle.cliente_id === null)) {
           this.associationError.set('No hay vehículos libres. Registra el vehículo primero o desvincúlalo de su cliente actual.');
         }
       },
       error: () => {
         this.vehiclesLoading.set(false);
         this.associationError.set('No se pudieron consultar los vehículos disponibles.');
+      },
+    });
+  }
+
+  protected requestUnlink(client: Cliente): void {
+    this.unlinkingClient.set(client);
+    this.unlinkTarget.set(null);
+    this.unlinkError.set('');
+    this.unlinkLoading.set(true);
+    this.loadAllVehicles(true).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (vehicles) => {
+        this.unlinkLoading.set(false);
+        const vehicle = vehicles.find((item) => item.cliente_id === client.id && item.placa === client.placa);
+        if (!vehicle) {
+          this.unlinkError.set('No se encontró el vehículo asociado. Actualiza los datos y vuelve a intentarlo.');
+          return;
+        }
+        this.unlinkTarget.set({ client, vehicle });
+      },
+      error: () => {
+        this.unlinkLoading.set(false);
+        this.unlinkError.set('No se pudo consultar el vehículo asociado.');
+      },
+    });
+  }
+
+  protected confirmUnlink(): void {
+    const target = this.unlinkTarget();
+    if (!target || this.unlinkBusy()) return;
+    this.unlinkBusy.set(true);
+    this.unlinkError.set('');
+    this.api.update(target.vehicle.id, { cliente_id: null }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.unlinkBusy.set(false);
+        this.unlinkingClient.set(null);
+        this.unlinkTarget.set(null);
+        this.actionSuccess.set(`La placa ${target.vehicle.placa} se desvinculó de ${target.client.nombre}.`);
+        this.load();
+      },
+      error: (error: { error?: { detail?: string } }) => {
+        this.unlinkBusy.set(false);
+        this.unlinkError.set(error.error?.detail ?? 'No se pudo desvincular el vehículo.');
       },
     });
   }

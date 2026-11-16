@@ -38,7 +38,7 @@ class VehiculoActualizar(BaseModel):
     cliente_id: Identificador | None = None
     activo: bool | None = None
 
-    @field_validator("*", mode="before")
+    @field_validator("placa", "color", "modelo", "marca", "tipo", "activo", mode="before")
     @classmethod
     def reject_null(cls, value):
         if value is None:

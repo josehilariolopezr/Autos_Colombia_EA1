@@ -1,15 +1,17 @@
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+from fastapi.testclient import TestClient
 from pydantic import ValidationError
-from sqlalchemy.exc import IntegrityError
 
+from app.database import get_session
+from app.main import app
+from app.models import Vehiculo
 from app.schemas.vehiculo import VehiculoActualizar, VehiculoCrear
-from app.services.vehiculo import VehiculoError, delete_vehicle
+from app.services.vehiculo import delete_vehicle
 
 
-@pytest.mark.parametrize("field", ["placa", "color", "modelo", "marca", "tipo"])
+@pytest.mark.parametrize("field", ["placa", "color", "modelo", "marca", "tipo", "activo"])
 def test_patch_rejects_explicit_null(field):
     with pytest.raises(ValidationError):
         VehiculoActualizar(**{field: None})
@@ -28,21 +30,60 @@ def test_patch_only_supplied_fields_and_no_id():
         VehiculoActualizar(id=1)
 
 
+def test_patch_accepts_explicit_null_client_id():
+    assert VehiculoActualizar(cliente_id=None).model_dump(exclude_unset=True) == {"cliente_id": None}
+
+
 def test_creation_requires_every_field():
     with pytest.raises(ValidationError):
         VehiculoCrear(placa="ABC123")
 
 
-def test_delete_foreign_key_conflict_rolls_back_without_related_deletes():
+def test_patch_endpoint_unlinks_vehicle_from_client():
+    vehicle = Vehiculo(
+        id=11,
+        placa="ABC123",
+        color="Azul",
+        modelo=2024,
+        marca="Toyota",
+        tipo="AUTOMOVIL",
+        cliente_id=7,
+        activo=True,
+    )
     session = MagicMock()
-    vehicle = session.get.return_value
-    driver_error = Exception("private database details")
-    driver_error.sqlstate = "23503"
-    driver_error.diag = SimpleNamespace(constraint_name="some_foreign_key")
-    session.commit.side_effect = IntegrityError("DELETE", {}, driver_error)
-    with pytest.raises(VehiculoError) as result:
-        delete_vehicle(session, 1)
-    assert result.value.status_code == 409
-    assert "private" not in result.value.detail
-    session.rollback.assert_called_once()
-    session.delete.assert_called_once_with(vehicle)
+    session.get.return_value = vehicle
+
+    def override_session():
+        yield session
+
+    app.dependency_overrides[get_session] = override_session
+    try:
+        response = TestClient(app).patch("/vehiculos/11", json={"cliente_id": None})
+    finally:
+        app.dependency_overrides.pop(get_session, None)
+
+    assert response.status_code == 200
+    assert response.json()["cliente_id"] is None
+    assert vehicle.cliente_id is None
+    session.commit.assert_called_once()
+
+
+def test_deactivation_is_logical_and_does_not_delete_vehicle():
+    vehicle = Vehiculo(
+        id=12,
+        placa="XYZ123",
+        color="Rojo",
+        modelo=2023,
+        marca="Kia",
+        tipo="AUTOMOVIL",
+        activo=True,
+    )
+    session = MagicMock()
+    session.get.return_value = vehicle
+    session.scalar.return_value = None
+
+    result = delete_vehicle(session, vehicle.id)
+
+    assert result.activo is False
+    session.commit.assert_called_once()
+    session.delete.assert_not_called()

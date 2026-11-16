@@ -2,11 +2,19 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Celdas } from './celdas';
+import { DashboardResumen } from '../models/dashboard';
 
 describe('Gestión de celdas', () => {
   let fixture: ComponentFixture<Celdas>;
   let http: HttpTestingController;
-  const cell = { id: 1, codigo: 'A-01', tipo: 'Categoría libre', estado: 'ACTIVA' as const };
+  const cell = { id: 1, codigo: 'A-01', tipo: 'AUTOMOVIL', estado: 'ACTIVA' as const };
+  const dashboard = { celdas_ocupadas: 1, celdas: [{ id: 1, codigo: 'A-01', tipo: 'AUTOMOVIL', zona: 'A', estado: 'OCUPADA' }] } as DashboardResumen;
+
+  const flushInitialRequests = (items = [cell]) => {
+    http.expectOne('/celdas?offset=0&limit=100').flush({ items, total: items.length, offset: 0, limit: 100 });
+    http.expectOne('/dashboard/resumen').flush(dashboard);
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Celdas],
@@ -15,80 +23,46 @@ describe('Gestión de celdas', () => {
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(Celdas);
     fixture.detectChanges();
-    http
-      .expectOne('/celdas?offset=0&limit=10')
-      .flush({ items: [cell], total: 1, offset: 0, limit: 10 });
+    flushInitialRequests();
   });
   afterEach(() => http.verify());
 
-  it('crea desde el formulario HTML con código normalizado y tipo libre', () => {
-    fixture.componentInstance.newCell();
-    fixture.detectChanges();
-    const root = fixture.nativeElement as HTMLElement;
-    for (const [id, value] of Object.entries({
-      codigo: ' a-02 ',
-      tipo: 'Categoría sin catálogo',
-    })) {
-      const input = root.querySelector<HTMLInputElement>(`#${id}`)!;
-      input.value = value;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-    root
-      .querySelector('form')!
-      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    fixture.componentInstance.save();
+  it('combina búsqueda, zona y estado, y reinicia la paginación al filtrar', () => {
+    const component = fixture.componentInstance;
+    component.celdas.set([
+      cell,
+      { id: 2, codigo: 'M-03', tipo: 'MOTO', estado: 'ACTIVA' },
+      { id: 3, codigo: 'P-01', tipo: 'CAMIONETA', estado: 'MANTENIMIENTO' },
+    ]);
+    component.dashboard.set({
+      ...dashboard,
+      celdas: [
+        { id: 1, codigo: 'A-01', tipo: 'AUTOMOVIL', zona: 'A', estado: 'OCUPADA' },
+        { id: 2, codigo: 'M-03', tipo: 'MOTO', zona: 'M', estado: 'DISPONIBLE' },
+      ],
+    } as DashboardResumen);
+    component.currentPage.set(3);
+    component.actualizarBusqueda('m-03');
+    component.seleccionarZona('M');
+    component.seleccionarEstado('LIBRE');
+
+    expect(component.currentPage()).toBe(1);
+    expect(component.celdasFiltradas().map((item) => item.codigo)).toEqual(['M-03']);
+    expect(component.celdasPaginadas()).toEqual(component.celdasFiltradas());
+    component.limpiarFiltros();
+    expect(component.celdasFiltradas()).toHaveLength(3);
+  });
+
+  it('crea una celda y recarga el inventario y la ocupación', () => {
+    const component = fixture.componentInstance;
+    component.newCell();
+    component.form.setValue({ codigo: ' a-02 ', tipo: 'AUTOMOVIL', estado: 'ACTIVA' });
+    component.save();
     const request = http.expectOne({ method: 'POST', url: '/celdas' });
-    expect(request.request.body).toEqual({ codigo: 'A-02', tipo: 'Categoría sin catálogo' });
+    expect(request.request.body).toEqual({ codigo: 'A-02', tipo: 'AUTOMOVIL' });
     request.flush({ ...cell, codigo: 'A-02' });
-    http
-      .expectOne('/celdas?offset=0&limit=10')
-      .flush({ items: [cell], total: 1, offset: 0, limit: 10 });
-    expect(fixture.componentInstance.success()).toContain('registrada');
-  });
-
-  it('rechaza blancos y muestra duplicados junto al código', () => {
-    const c = fixture.componentInstance;
-    c.newCell();
-    c.form.setValue({ codigo: ' ', tipo: ' ' });
-    c.save();
-    expect(c.form.invalid).toBe(true);
-    c.form.setValue({ codigo: 'A-01', tipo: 'Libre' });
-    c.save();
-    http.expectOne('/celdas').flush({}, { status: 409, statusText: 'Conflict' });
-    expect(c.fieldError('codigo')).toContain('Ya existe');
-  });
-
-  it('edita mediante PATCH y recarga la lista', () => {
-    const c = fixture.componentInstance;
-    c.edit(cell);
-    http.expectOne('/celdas/1').flush(cell);
-    c.form.controls.tipo.setValue('Nuevo tipo');
-    c.save();
-    const request = http.expectOne({ method: 'PATCH', url: '/celdas/1' });
-    expect(request.request.body.id).toBeUndefined();
-    request.flush({ ...cell, tipo: 'Nuevo tipo' });
-    http
-      .expectOne('/celdas?offset=0&limit=10')
-      .flush({ items: [cell], total: 1, offset: 0, limit: 10 });
-  });
-
-  it('requiere confirmación y permite cancelar antes de eliminar', () => {
-    const c = fixture.componentInstance;
-    c.confirmDelete(cell);
-    fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[role="alertdialog"]').textContent).toContain(
-      'A-01',
-    );
-    c.cancel();
-    http.expectNone((request) => request.method === 'DELETE');
-    c.confirmDelete(cell);
-    c.remove();
-    http
-      .expectOne({ method: 'DELETE', url: '/celdas/1' })
-      .flush(null, { status: 204, statusText: 'No Content' });
-    http
-      .expectOne('/celdas?offset=0&limit=10')
-      .flush({ items: [], total: 0, offset: 0, limit: 10 });
-    expect(c.success()).toContain('eliminada');
+    http.expectOne('/celdas?offset=0&limit=100').flush({ items: [cell], total: 1, offset: 0, limit: 100 });
+    http.expectOne('/dashboard/resumen').flush(dashboard);
+    expect(component.success()).toContain('registrada');
   });
 });

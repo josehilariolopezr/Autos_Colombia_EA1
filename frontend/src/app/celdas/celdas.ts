@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
+import { EMPTY, expand, reduce } from 'rxjs';
 import { ApiService } from '../services/api.service';
 import { CeldasService } from '../services/celdas.service';
 import { Celda, CeldaActualizar, CeldaCrear } from '../models/celda';
@@ -11,11 +12,12 @@ import { ErrorApi } from '../models/vehiculo';
 const nonBlank: ValidatorFn = (control) =>
   typeof control.value === 'string' && control.value.trim() ? null : { required: true };
 type Field = 'codigo' | 'tipo';
-type CellFilter = 'TODAS' | 'A' | 'M' | 'P' | 'MANTENIMIENTO';
+type ZoneFilter = 'TODAS' | 'A' | 'M' | 'P';
+type StateFilter = 'TODAS' | 'LIBRE' | 'OCUPADA' | 'MANTENIMIENTO';
 
 @Component({
   selector: 'app-celdas',
-  imports: [ReactiveFormsModule],
+  imports: [FormsModule, ReactiveFormsModule],
   templateUrl: './celdas.html',
   styleUrl: './celdas.css',
 })
@@ -31,8 +33,12 @@ export class Celdas {
   });
   readonly vehicleTypes = ['AUTOMOVIL', 'MOTO', 'CAMIONETA'] as const;
   readonly items = signal<Celda[]>([]);
+  readonly celdas = this.items;
   readonly total = computed(() => this.items().length);
-  readonly offset = signal(0);
+  readonly busquedaCodigo = signal('');
+  readonly filtroZona = signal<ZoneFilter>('TODAS');
+  readonly filtroEstado = signal<StateFilter>('TODAS');
+  readonly currentPage = signal(1);
   readonly limit = 10;
   readonly inventoryLimit = 100;
   readonly loading = signal(false);
@@ -40,8 +46,6 @@ export class Celdas {
   readonly busy = computed(() => this.loading() || this.saving());
   readonly showForm = signal(false);
   readonly editing = signal<number | null>(null);
-  readonly searchTerm = signal('');
-  readonly filter = signal<CellFilter>('TODAS');
   readonly dashboard = signal<DashboardResumen | null>(null);
   readonly occupancyLoading = signal(true);
   readonly listError = signal('');
@@ -50,22 +54,29 @@ export class Celdas {
   readonly activeCount = computed(() => this.items().filter((cell) => cell.estado === 'ACTIVA').length);
   readonly maintenanceCount = computed(() => this.items().filter((cell) => cell.estado === 'MANTENIMIENTO').length);
   readonly occupiedCount = computed(() => this.dashboard()?.celdas_ocupadas ?? null);
-  readonly filteredItems = computed(() => {
-    const query = this.searchTerm().trim().toLocaleUpperCase('es-CO');
-    const currentFilter = this.filter();
-    return this.items().filter((cell) => {
+  readonly celdasFiltradas = computed(() => {
+    const query = this.busquedaCodigo().trim().toLocaleUpperCase('es-CO');
+    const selectedZone = this.filtroZona();
+    const selectedState = this.filtroEstado();
+    return this.celdas().filter((cell) => {
       const code = cell.codigo.toLocaleUpperCase('es-CO');
       const matchesSearch = !query || code.includes(query);
-      const matchesFilter = currentFilter === 'TODAS'
-        || (currentFilter === 'MANTENIMIENTO' ? cell.estado === 'MANTENIMIENTO' : code.startsWith(`${currentFilter}-`));
-      return matchesSearch && matchesFilter;
+      const matchesZone = selectedZone === 'TODAS' || this.zone(cell) === selectedZone;
+      const matchesState = selectedState === 'TODAS' || this.estadoParaFiltro(cell) === selectedState;
+      return matchesSearch && matchesZone && matchesState;
     });
   });
-  readonly visibleItems = computed(() => this.filteredItems().slice(this.offset(), this.offset() + this.limit));
-  readonly visibleStart = computed(() => this.filteredItems().length ? this.offset() + 1 : 0);
-  readonly visibleEnd = computed(() => Math.min(this.offset() + this.limit, this.filteredItems().length));
-  readonly page = computed(() => Math.floor(this.offset() / this.limit) + 1);
-  readonly pages = computed(() => Math.max(1, Math.ceil(this.filteredItems().length / this.limit)));
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.celdasFiltradas().length / this.limit)));
+  readonly celdasPaginadas = computed(() => {
+    const start = (this.currentPage() - 1) * this.limit;
+    return this.celdasFiltradas().slice(start, start + this.limit);
+  });
+  readonly filteredItems = this.celdasFiltradas;
+  readonly visibleItems = this.celdasPaginadas;
+  readonly visibleStart = computed(() => this.celdasFiltradas().length ? (this.currentPage() - 1) * this.limit + 1 : 0);
+  readonly visibleEnd = computed(() => Math.min(this.currentPage() * this.limit, this.celdasFiltradas().length));
+  readonly page = this.currentPage;
+  readonly pages = this.totalPages;
 
   constructor() {
     this.load();
@@ -78,11 +89,17 @@ export class Celdas {
     this.listError.set('');
     this.api
       .list(0, this.inventoryLimit)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        expand((page) => page.items.length > 0 && page.offset + page.items.length < page.total
+          ? this.api.list(page.offset + page.items.length, this.inventoryLimit)
+          : EMPTY),
+        reduce((all, page) => all.concat(page.items), [] as Celda[]),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
-        next: (data) => {
-          this.items.set(data.items);
-          this.offset.set(0);
+        next: (cells) => {
+          this.items.set(cells);
+          this.currentPage.set(1);
           this.loading.set(false);
         },
         error: (error) => {
@@ -109,19 +126,50 @@ export class Celdas {
       });
   }
 
-  setSearch(value: string): void {
-    this.searchTerm.set(value);
-    this.offset.set(0);
+  actualizarBusqueda(valor: string): void {
+    this.busquedaCodigo.set(valor);
+    this.currentPage.set(1);
   }
 
-  setFilter(value: CellFilter): void {
-    this.filter.set(value);
-    this.offset.set(0);
+  seleccionarZona(zona: ZoneFilter): void {
+    this.filtroZona.set(zona);
+    this.currentPage.set(1);
+  }
+
+  seleccionarEstado(estado: StateFilter): void {
+    this.filtroEstado.set(estado);
+    this.currentPage.set(1);
+  }
+
+  limpiarFiltros(): void {
+    this.busquedaCodigo.set('');
+    this.filtroZona.set('TODAS');
+    this.filtroEstado.set('TODAS');
+    this.currentPage.set(1);
+  }
+
+  get filtrosActivos(): boolean {
+    return !!this.busquedaCodigo().trim()
+      || this.filtroZona() !== 'TODAS'
+      || this.filtroEstado() !== 'TODAS';
+  }
+
+  cambiarPagina(direccion: -1 | 1): void {
+    const pagina = this.currentPage() + direccion;
+    if (pagina >= 1 && pagina <= this.totalPages()) this.currentPage.set(pagina);
   }
 
   zone(cell: Celda): string {
     const prefix = cell.codigo.split('-', 1)[0]?.toUpperCase();
     return prefix === 'A' || prefix === 'M' || prefix === 'P' ? prefix : 'OTRA';
+  }
+
+  private estadoParaFiltro(cell: Celda): StateFilter | null {
+    if (cell.estado === 'MANTENIMIENTO') return 'MANTENIMIENTO';
+    const status = this.dashboard()?.celdas.find((item) => item.codigo === cell.codigo)?.estado;
+    if (status === 'OCUPADA') return 'OCUPADA';
+    if (status === 'DISPONIBLE') return 'LIBRE';
+    return null;
   }
 
   occupancy(cell: Celda): 'Ocupada' | 'Disponible' | 'Inhabilitada' | '—' {

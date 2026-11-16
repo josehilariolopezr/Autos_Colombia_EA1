@@ -7,6 +7,16 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
+DEFAULT_CORS_ORIGINS = ("http://localhost:4200", "http://127.0.0.1:4200")
+
+
+def load_allowed_origins() -> list[str]:
+    values = {**dotenv_values(ENV_FILE, encoding="utf-8-sig", interpolate=False), **os.environ}
+    configured = values.get("CORS_ALLOWED_ORIGINS")
+    if not isinstance(configured, str) or not configured.strip():
+        return list(DEFAULT_CORS_ORIGINS)
+    origins = [origin.strip() for origin in configured.split(",") if origin.strip()]
+    return origins or list(DEFAULT_CORS_ORIGINS)
 
 
 class ConfigurationError(ValueError):
