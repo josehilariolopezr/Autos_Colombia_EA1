@@ -1,148 +1,49 @@
 <section class="management" aria-labelledby="operators-title">
   <header class="heading">
-    <div>
-      <span class="eyebrow">GESTIÓN DE OPERADORES</span>
-      <h1 id="operators-title">Operadores</h1>
-      <p>Administra los operadores de Autos Colombia.</p>
-    </div>
-    <button class="primary" type="button" (click)="newOperator()" [disabled]="busy()">
-      Nuevo operador
-    </button>
+    <div><span class="eyebrow">ADMINISTRACIÓN DEL EQUIPO</span><h1 id="operators-title">Gestión de operadores</h1><p>Administra los perfiles que registran los movimientos del parqueadero.</p></div>
+    <button class="primary" type="button" (click)="newOperator()" [disabled]="busy()">+ Registrar operador</button>
   </header>
-  @if (success()) {
-    <p class="notice success" role="status">{{ success() }}</p>
-  }
-  @if (actionError()) {
-    <p class="notice error" role="alert">{{ actionError() }}</p>
-  }
-  @if (showForm()) {
-    <section class="panel" aria-labelledby="form-title">
-      <h2 id="form-title">{{ editing() === null ? 'Registrar operador' : 'Editar operador' }}</h2>
-      <p class="hint">
-        Todos los campos son obligatorios. El teléfono conserva prefijos y ceros iniciales.
-      </p>
-      <form [formGroup]="form" (ngSubmit)="save()" novalidate>
-        <fieldset [disabled]="busy()">
-          <legend class="sr-only">Datos del operador</legend>
-          <div class="form-grid">
-            @for (field of fields; track field.key) {
-              <div class="field">
-                <label [for]="field.key">{{ field.label }}</label
-                ><input
-                  [type]="field.key === 'telefono' ? 'tel' : 'text'"
-                  [id]="field.key"
-                  [formControlName]="field.key"
-                  required
-                  [attr.aria-invalid]="!!fieldError(field.key)"
-                  [attr.aria-describedby]="field.key + '-error'"
-                /><span class="field-error" [id]="field.key + '-error'">{{
-                  fieldError(field.key)
-                }}</span>
-              </div>
-            }
-          </div>
-          <div class="actions">
-            <button type="submit" class="primary">
-              {{ saving() ? 'Guardando…' : 'Guardar operador' }}</button
-            ><button type="button" (click)="cancel()">Cancelar</button>
-          </div>
-        </fieldset>
-      </form>
-    </section>
-  }
-  @if (pendingStatus(); as operator) {
-    <section
-      class="panel confirmation"
-      role="alertdialog"
-      aria-labelledby="status-title"
-      aria-describedby="status-description"
-    >
-      <h2 id="status-title">{{ operator.activo ? 'Desactivar' : 'Reactivar' }} operador {{ operator.nombre }}</h2>
-      <p id="status-description">{{ operator.activo ? 'El operador dejará de estar disponible para nuevas operaciones.' : 'El operador volverá a estar disponible para las operaciones.' }} El registro y su historial se conservan en la base de datos.</p>
-      <div class="actions">
-        <button type="button" (click)="pendingStatus.set(null)" [disabled]="busy()">Cancelar</button
-        ><button type="button" class="primary" (click)="confirmStatusChange()" [disabled]="busy()">
-          {{ saving() ? 'Guardando…' : 'Confirmar' }}
-        </button>
-      </div>
-    </section>
-  }
-  <section class="panel list" aria-label="Listado de operadores" [attr.aria-busy]="loading()">
-    <div class="list-heading">
-      <h2>
-        Operadores registrados <span class="count">{{ total() }}</span>
-      </h2>
-      <div class="actions"><label><input type="checkbox" [checked]="includeInactive()" (change)="setIncludeInactive($any($event.target).checked)" /> Mostrar inactivos</label><button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button></div>
-    </div>
-    @if (loading()) {
-      <p class="empty" role="status">Cargando operadores…</p>
-    } @else if (listError()) {
-      <p class="notice error" role="alert">{{ listError() }}</p>
-    } @else if (!items().length) {
-      <div class="empty">
-        <h3>Aún no hay operadores</h3>
-        <p>Registra un operador para comenzar.</p>
-      </div>
-    } @else {
-      <div class="table-scroll">
-        <table>
-          <caption class="sr-only">
-            Operadores registrados
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Nombre</th>
-              <th scope="col">Teléfono</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (operator of items(); track operator.id) {
-              <tr>
-                <th scope="row">{{ operator.nombre }}</th>
-                <td>{{ operator.telefono }}</td>
-                <td>{{ operator.activo ? 'Activo' : 'Inactivo' }}</td>
-                <td class="row-actions">
-                  <button
-                    type="button"
-                    (click)="edit(operator)"
-                    [disabled]="busy()"
-                    [attr.aria-label]="'Editar ' + operator.nombre"
-                  >
-                    Editar</button
-                  ><button
-                    type="button"
-                    (click)="requestStatusChange(operator)"
-                    [disabled]="busy()"
-                    [attr.aria-label]="(operator.activo ? 'Desactivar ' : 'Reactivar ') + operator.nombre"
-                  >
-                    {{ operator.activo ? 'Desactivar' : 'Reactivar' }}
-                  </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-    <nav class="pagination" aria-label="Paginación de operadores">
-      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
-      <div class="actions">
-        <button
-          type="button"
-          (click)="load(offset() - limit)"
-          [disabled]="busy() || offset() === 0"
-        >
-          Anterior</button
-        ><button
-          type="button"
-          (click)="load(offset() + limit)"
-          [disabled]="busy() || offset() + limit >= total()"
-        >
-          Siguiente
-        </button>
-      </div>
-    </nav>
+  @if (success()) { <p class="notice success" role="status">{{ success() }}</p> }
+  @if (actionError()) { <p class="notice error" role="alert">{{ actionError() }}</p> }
+
+  <section class="kpi-grid" aria-label="Indicadores de operadores">
+    <article class="kpi-card"><span class="kpi-icon navy">♙</span><div><p>Total operadores</p><strong>{{ total() }}</strong><small>Perfiles registrados</small></div></article>
+    <article class="kpi-card"><span class="kpi-icon green">✓</span><div><p>Activos</p><strong>{{ activeCount() }}</strong><small>Disponibles para operar</small></div></article>
+    <article class="kpi-card"><span class="kpi-icon red">−</span><div><p>Inactivos</p><strong>{{ inactiveCount() }}</strong><small>Historial conservado</small></div></article>
   </section>
+
+  <section class="panel list" aria-label="Listado de operadores" [attr.aria-busy]="loading()">
+    <div class="list-heading"><div><h2>Equipo de operación</h2><p>Consulta y administra los accesos operativos.</p></div><button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button></div>
+    <div class="toolbar">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input #search type="search" placeholder="Buscar por nombre, teléfono o código..." [value]="searchTerm()" (input)="setSearch(search.value)" /></label>
+      <div class="filter-pills" role="group" aria-label="Filtrar por estado"><button type="button" [class.selected]="statusFilter() === 'TODOS'" (click)="setStatusFilter('TODOS')">Todos <span>{{ total() }}</span></button><button type="button" [class.selected]="statusFilter() === 'ACTIVOS'" (click)="setStatusFilter('ACTIVOS')">Activos <span>{{ activeCount() }}</span></button><button type="button" [class.selected]="statusFilter() === 'INACTIVOS'" (click)="setStatusFilter('INACTIVOS')">Inactivos <span>{{ inactiveCount() }}</span></button></div>
+    </div>
+    @if (loading()) { <p class="empty" role="status">Cargando operadores…</p> }
+    @else if (listError()) { <p class="notice error" role="alert">{{ listError() }} <button type="button" (click)="load()">Reintentar</button></p> }
+    @else if (!filteredItems().length) { <div class="empty"><h3>No hay operadores para mostrar</h3><p>Ajusta la búsqueda o el filtro seleccionado.</p></div> }
+    @else {
+      <div class="table-scroll"><table><caption class="sr-only">Operadores registrados</caption><thead><tr><th scope="col">ID</th><th scope="col">NOMBRE</th><th scope="col">TELÉFONO</th><th scope="col">ROL</th><th scope="col">ESTADO</th><th scope="col">ACCIONES</th></tr></thead><tbody>
+        @for (operator of visibleItems(); track operator.id) {
+          <tr><td class="operator-code">{{ operatorCode(operator.id) }}</td><th scope="row"><span class="person"><i>{{ initials(operator.nombre) }}</i>{{ operator.nombre }}</span></th><td class="phone">{{ operator.telefono }}</td><td><span class="role-tag">OPERADOR</span></td><td><span class="badge" [class.active]="operator.activo" [class.inactive]="!operator.activo">{{ operator.activo ? 'ACTIVO' : 'INACTIVO' }}</span></td><td class="row-actions"><button type="button" (click)="edit(operator)" [disabled]="busy()" [attr.aria-label]="'Editar ' + operator.nombre">Editar</button><button type="button" [class.deactivate]="operator.activo" (click)="requestStatusChange(operator)" [disabled]="busy()">{{ operator.activo ? 'Desactivar' : 'Reactivar' }}</button></td></tr>
+        }
+      </tbody></table></div>
+      <nav class="pagination" aria-label="Paginación de operadores"><span>Mostrando {{ visibleStart() }}–{{ visibleEnd() }} de {{ filteredItems().length }} operadores</span><div><button type="button" (click)="offset.set(offset() - limit)" [disabled]="offset() === 0">Anterior</button><span class="page-number">{{ page() }} / {{ pages() }}</span><button type="button" (click)="offset.set(offset() + limit)" [disabled]="offset() + limit >= filteredItems().length">Siguiente</button></div></nav>
+    }
+  </section>
+
+  @if (pendingStatus(); as operator) {
+    <div class="modal-backdrop" (click)="pendingStatus.set(null)"><section class="form-modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="status-title" aria-describedby="status-description" (click)="$event.stopPropagation()"><button class="close" type="button" aria-label="Cerrar" (click)="pendingStatus.set(null)" [disabled]="busy()">×</button><span class="eyebrow">CAMBIO DE ESTADO</span><h2 id="status-title">{{ operator.activo ? 'Desactivar' : 'Reactivar' }} operador</h2><p id="status-description"><strong>{{ operator.nombre }}</strong> {{ operator.activo ? 'dejará de estar disponible para nuevas operaciones.' : 'volverá a estar disponible para nuevas operaciones.' }} El registro y su historial se conservan en PostgreSQL.</p><div class="modal-actions"><button type="button" (click)="pendingStatus.set(null)" [disabled]="busy()">Cancelar</button><button type="button" class="primary" (click)="confirmStatusChange()" [disabled]="busy()">{{ saving() ? 'Guardando…' : 'Confirmar' }}</button></div></section></div>
+  }
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="cancel()"><section class="form-modal" role="dialog" aria-modal="true" aria-labelledby="form-title" (click)="$event.stopPropagation()"><button class="close" type="button" aria-label="Cerrar" (click)="cancel()" [disabled]="saving()">×</button><span class="eyebrow">ADMINISTRACIÓN DE PERSONAL</span><h2 id="form-title">{{ editing() === null ? 'Registrar operador' : 'Editar operador' }}</h2><p class="hint">El teléfono conserva prefijos y ceros iniciales.</p>
+      <form [formGroup]="form" (ngSubmit)="save()" novalidate><fieldset [disabled]="busy()"><legend class="sr-only">Datos del operador</legend>
+        <div class="field"><label for="nombre">Nombre completo</label><input id="nombre" type="text" autocomplete="name" formControlName="nombre" required [attr.aria-invalid]="!!fieldError('nombre')" aria-describedby="nombre-error" /><span class="field-error" id="nombre-error">{{ fieldError('nombre') }}</span></div>
+        <div class="field"><label for="telefono">Teléfono</label><input id="telefono" type="tel" autocomplete="tel" formControlName="telefono" required [attr.aria-invalid]="!!fieldError('telefono')" aria-describedby="telefono-error" /><span class="field-error" id="telefono-error">{{ fieldError('telefono') }}</span></div>
+        @if (editing() !== null) { <label class="status-toggle"><input type="checkbox" formControlName="activo" /><span><strong>{{ form.controls.activo.value ? 'ACTIVO' : 'INACTIVO' }}</strong><small>Estado del operador</small></span></label> }
+        @if (actionError()) { <p class="notice error" role="alert">{{ actionError() }}</p> }
+        <div class="modal-actions"><button type="button" (click)="cancel()">Cancelar</button><button type="submit" class="primary">{{ saving() ? 'Guardando…' : editing() === null ? 'Registrar operador' : 'Guardar cambios' }}</button></div>
+      </fieldset></form>
+    </section></div>
+  }
 </section>

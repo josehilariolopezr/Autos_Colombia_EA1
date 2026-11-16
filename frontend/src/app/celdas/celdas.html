@@ -1,124 +1,89 @@
 <section class="management" aria-labelledby="cells-title">
   <header class="heading">
     <div>
-      <span class="eyebrow">GESTIÓN DEL ESPACIO</span>
-      <h1 id="cells-title">Celdas</h1>
-      <p>Administra los espacios de Autos Colombia.</p>
+      <span class="eyebrow">GESTIÓN DE ESPACIOS</span>
+      <h1 id="cells-title">Gestión de celdas</h1>
+      <p>Consulta, organiza y controla el estado operativo de cada espacio.</p>
     </div>
-    <button class="primary" type="button" (click)="newCell()" [disabled]="busy()">
-      Nueva celda
-    </button>
+    <button class="primary" type="button" (click)="newCell()" [disabled]="busy()">+ Registrar celda</button>
   </header>
-  @if (success()) {
-    <p class="notice success" role="status">{{ success() }}</p>
-  }
-  @if (actionError()) {
-    <p class="notice error" role="alert">{{ actionError() }}</p>
-  }
-  @if (showForm()) {
-    <section class="panel" aria-labelledby="form-title">
-      <h2 id="form-title">{{ editing() === null ? 'Registrar celda' : 'Editar celda' }}</h2>
-      <p class="hint">Todos los campos son obligatorios. El tipo es texto libre.</p>
-      <form [formGroup]="form" (ngSubmit)="save()" novalidate>
-        <fieldset [disabled]="busy()">
-          <legend class="sr-only">Datos de la celda</legend>
-          <div class="form-grid">
-            @for (field of fields; track field.key) {
-              <div class="field">
-                <label [for]="field.key">{{ field.label }}</label
-                ><input
-                  type="text"
-                  [id]="field.key"
-                  [formControlName]="field.key"
-                  required
-                  [attr.aria-invalid]="!!fieldError(field.key)"
-                  [attr.aria-describedby]="field.key + '-error'"
-                /><span class="field-error" [id]="field.key + '-error'">{{
-                  fieldError(field.key)
-                }}</span>
-              </div>
-            }
-          </div>
-          <div class="actions">
-            <button type="submit" class="primary">
-              {{ saving() ? 'Guardando…' : 'Guardar celda' }}</button
-            ><button type="button" (click)="cancel()">Cancelar</button>
-          </div>
-        </fieldset>
-      </form>
-    </section>
-  }
-  <section class="panel list" aria-label="Listado de celdas" [attr.aria-busy]="loading()">
+
+  @if (success()) { <p class="notice success" role="status">{{ success() }}</p> }
+  @if (actionError()) { <p class="notice error" role="alert">{{ actionError() }}</p> }
+
+  <section class="kpi-grid" aria-label="Indicadores de celdas">
+    <article class="kpi-card"><span class="kpi-icon navy">▦</span><div><p>Total celdas</p><strong>{{ total() }}</strong><small>En el inventario</small></div></article>
+    <article class="kpi-card"><span class="kpi-icon green">✓</span><div><p>Activas</p><strong>{{ activeCount() }}</strong><small>Habilitadas para operación</small></div></article>
+    <article class="kpi-card"><span class="kpi-icon amber">↗</span><div><p>Ocupadas</p><strong>{{ occupancyLoading() ? '…' : (occupiedCount() ?? '—') }}</strong><small>Según el resumen operativo</small></div></article>
+    <article class="kpi-card"><span class="kpi-icon gray">⚙</span><div><p>En mantenimiento</p><strong>{{ maintenanceCount() }}</strong><small>Inhabilitadas temporalmente</small></div></article>
+  </section>
+
+  <section class="panel list" aria-label="Inventario de celdas" [attr.aria-busy]="loading()">
     <div class="list-heading">
-      <h2>
-        Celdas registradas <span class="count">{{ total() }}</span>
-      </h2>
+      <div><h2>Inventario de celdas</h2><p>Disponibilidad y estado del parqueadero</p></div>
       <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
     </div>
+    <div class="toolbar">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input #search type="search" placeholder="Buscar por código de celda..." [value]="searchTerm()" (input)="setSearch(search.value)" /></label>
+      <div class="filter-pills" role="group" aria-label="Filtrar celdas por zona o estado">
+        <button type="button" [class.selected]="filter() === 'TODAS'" (click)="setFilter('TODAS')">Todas <span>{{ total() }}</span></button>
+        <button type="button" [class.selected]="filter() === 'A'" (click)="setFilter('A')">Zona A - Carros</button>
+        <button type="button" [class.selected]="filter() === 'M'" (click)="setFilter('M')">Zona M - Motos</button>
+        <button type="button" [class.selected]="filter() === 'P'" (click)="setFilter('P')">Zona P - Camionetas</button>
+        <button type="button" [class.selected]="filter() === 'MANTENIMIENTO'" (click)="setFilter('MANTENIMIENTO')">Mantenimiento</button>
+      </div>
+    </div>
+
     @if (loading()) {
       <p class="empty" role="status">Cargando celdas…</p>
     } @else if (listError()) {
-      <p class="notice error" role="alert">{{ listError() }}</p>
-    } @else if (!items().length) {
-      <div class="empty">
-        <h3>Aún no hay celdas</h3>
-        <p>Registra una celda para comenzar.</p>
-      </div>
+      <p class="notice error" role="alert">{{ listError() }} <button type="button" (click)="load()">Reintentar</button></p>
+    } @else if (!filteredItems().length) {
+      <div class="empty"><h3>No hay celdas para mostrar</h3><p>Ajusta el texto de búsqueda o el filtro seleccionado.</p></div>
     } @else {
       <div class="table-scroll">
         <table>
-          <caption class="sr-only">
-            Celdas registradas
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Código</th>
-              <th scope="col">Tipo</th>
-              <th scope="col">Estado</th>
-              <th scope="col">Acciones</th>
-            </tr>
-          </thead>
+          <caption class="sr-only">Inventario de celdas</caption>
+          <thead><tr><th scope="col">CÓDIGO</th><th scope="col">ZONA</th><th scope="col">TIPO VEHÍCULO</th><th scope="col">ESTADO OPERATIVO</th><th scope="col">OCUPACIÓN</th><th scope="col">ACCIONES</th></tr></thead>
           <tbody>
-            @for (cell of items(); track cell.id) {
+            @for (cell of visibleItems(); track cell.id) {
               <tr>
-                <th scope="row">{{ cell.codigo }}</th>
+                <th scope="row" class="cell-code">{{ cell.codigo }}</th>
+                <td><span class="zone-tag">{{ zone(cell) }}</span></td>
                 <td>{{ cell.tipo }}</td>
-                <td>{{ cell.estado === 'MANTENIMIENTO' ? 'En mantenimiento' : 'Habilitada' }}</td>
-                <td class="row-actions">
-                  <button type="button" (click)="toggleMaintenance(cell)" [disabled]="busy()">
-                    {{ cell.estado === 'MANTENIMIENTO' ? 'Habilitar' : 'Mantenimiento' }}
-                  </button>
-                  <button
-                    type="button"
-                    (click)="edit(cell)"
-                    [disabled]="busy()"
-                    [attr.aria-label]="'Editar ' + cell.codigo"
-                  >
-                    Editar</button>
-                </td>
+                <td><span class="badge" [class.active]="cell.estado === 'ACTIVA'" [class.maintenance]="cell.estado === 'MANTENIMIENTO'">{{ cell.estado === 'ACTIVA' ? 'ACTIVA' : 'MANTENIMIENTO' }}</span></td>
+                <td><span class="occupancy" [class.occupied]="occupancy(cell) === 'Ocupada'" [class.disabled-cell]="occupancy(cell) === 'Inhabilitada'">{{ occupancy(cell) }}</span></td>
+                <td class="row-actions"><button type="button" (click)="edit(cell)" [disabled]="busy()" [attr.aria-label]="'Editar ' + cell.codigo">Editar</button><button type="button" [class.maintenance-action]="cell.estado === 'ACTIVA'" (click)="toggleMaintenance(cell)" [disabled]="busy()">{{ cell.estado === 'MANTENIMIENTO' ? 'Habilitar' : 'Mantenimiento' }}</button></td>
               </tr>
             }
           </tbody>
         </table>
       </div>
+      <nav class="pagination" aria-label="Paginación de celdas"><span>Mostrando {{ visibleStart() }}–{{ visibleEnd() }} de {{ filteredItems().length }} celdas</span><div><button type="button" (click)="offset.set(offset() - limit)" [disabled]="offset() === 0">Anterior</button><span class="page-number">{{ page() }} / {{ pages() }}</span><button type="button" (click)="offset.set(offset() + limit)" [disabled]="offset() + limit >= filteredItems().length">Siguiente</button></div></nav>
     }
-    <nav class="pagination" aria-label="Paginación de celdas">
-      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
-      <div class="actions">
-        <button
-          type="button"
-          (click)="load(offset() - limit)"
-          [disabled]="busy() || offset() === 0"
-        >
-          Anterior</button
-        ><button
-          type="button"
-          (click)="load(offset() + limit)"
-          [disabled]="busy() || offset() + limit >= total()"
-        >
-          Siguiente
-        </button>
-      </div>
-    </nav>
   </section>
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="cancel()">
+      <section class="form-modal" role="dialog" aria-modal="true" aria-labelledby="form-title" (click)="$event.stopPropagation()">
+        <button class="close" type="button" aria-label="Cerrar" (click)="cancel()" [disabled]="saving()">×</button>
+        <span class="eyebrow">ADMINISTRACIÓN DE ESPACIOS</span>
+        <h2 id="form-title">{{ editing() === null ? 'Registrar celda' : 'Editar celda' }}</h2>
+        <p class="hint">Asigna el código de zona y el tipo de vehículo compatible.</p>
+        <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+          <fieldset [disabled]="busy()">
+            <legend class="sr-only">Datos de la celda</legend>
+            <div class="field"><label for="codigo">Código de celda</label><input id="codigo" type="text" formControlName="codigo" placeholder="A-01" required [attr.aria-invalid]="!!fieldError('codigo')" aria-describedby="codigo-error" /><span class="field-error" id="codigo-error">{{ fieldError('codigo') }}</span></div>
+            <div class="field"><label for="tipo">Tipo de vehículo</label><select id="tipo" formControlName="tipo" required [attr.aria-invalid]="!!fieldError('tipo')" aria-describedby="tipo-error"><option value="" disabled>Selecciona un tipo</option>@for (type of vehicleTypes; track type) { <option [value]="type">{{ type }}</option> }</select><span class="field-error" id="tipo-error">{{ fieldError('tipo') }}</span></div>
+            @if (editing() !== null) {
+              <div class="field"><label for="estado">Estado operativo</label><select id="estado" formControlName="estado"><option value="ACTIVA">ACTIVA</option><option value="MANTENIMIENTO">MANTENIMIENTO</option></select></div>
+              <p class="integrity-note"><strong>Regla de integridad:</strong> No es posible pasar a MANTENIMIENTO una celda con vehículo estacionado.</p>
+            }
+            @if (actionError()) { <p class="notice error" role="alert">{{ actionError() }}</p> }
+            <div class="modal-actions"><button type="button" (click)="cancel()">Cancelar</button><button type="submit" class="primary">{{ saving() ? 'Guardando…' : editing() === null ? 'Registrar celda' : 'Guardar cambios' }}</button></div>
+          </fieldset>
+        </form>
+      </section>
+    </div>
+  }
 </section>
