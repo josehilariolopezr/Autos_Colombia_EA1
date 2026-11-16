@@ -1,10 +1,14 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
+from fastapi import Request
+from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.testclient import TestClient
 import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
-from app.auth import create_access_token, hash_password
+from app.auth import create_access_token, get_current_user, hash_password
 from app.database import get_session
 from app.main import app
 from app.models import Usuario
@@ -177,3 +181,44 @@ def test_me_con_token_invalido():
     with TestClient(app) as client:
         response = client.get("/auth/me", headers={"Authorization": "Bearer tokeninvalido123"})
     assert response.status_code == 401
+
+
+def test_autenticacion_no_deja_transaccion_abierta(test_admin_user):
+    engine = create_engine("sqlite://")
+    try:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(
+                """
+                CREATE TABLE usuario (
+                    id BIGINT PRIMARY KEY,
+                    nombre TEXT NOT NULL,
+                    documento TEXT NOT NULL,
+                    correo TEXT NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    rol TEXT NOT NULL,
+                    activo BOOLEAN NOT NULL,
+                    operador_id BIGINT,
+                    creado_en DATETIME NOT NULL
+                )
+                """
+            )
+        with Session(engine) as session:
+            session.add(test_admin_user)
+            session.commit()
+            session.expunge_all()
+
+            user = get_current_user(
+                Request({"type": "http"}),
+                HTTPAuthorizationCredentials(
+                    scheme="Bearer",
+                    credentials=create_access_token({"sub": "1"}),
+                ),
+                session,
+            )
+
+            assert user.rol == "ADMINISTRADOR"
+            assert not session.in_transaction()
+            with session.begin():
+                pass
+    finally:
+        engine.dispose()

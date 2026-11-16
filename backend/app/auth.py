@@ -91,6 +91,9 @@ def get_current_user(
                 detail="El usuario está inactivo.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        # La lectura de autenticación no debe dejar abierta la transacción del servicio.
+        session.expunge(user)
+        session.rollback()
         return user
 
     path = request.url.path
