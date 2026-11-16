@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_session
@@ -23,8 +23,9 @@ def list_all(
     session: DatabaseSession,
     offset: Annotated[int, Query(ge=0, le=9223372036854775807)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    incluir_inactivos: bool = False,
 ) -> dict:
-    return service.list_operators(session, offset, limit)
+    return service.list_operators(session, offset, limit, incluir_inactivos)
 
 
 @router.get("/{id}", response_model=OperadorRespuesta)
@@ -37,8 +38,7 @@ def update(id: OperatorId, data: OperadorActualizar, session: DatabaseSession) -
     return service.update_operator(session, id, data)
 
 
-@router.delete("/{id}", status_code=204)
-def delete(id: OperatorId, session: DatabaseSession) -> Response:
-    service.delete_operator(session, id)
-    return Response(status_code=204)
+@router.delete("/{id}", response_model=OperadorRespuesta)
+def deactivate(id: OperatorId, session: DatabaseSession) -> Operador:
+    return service.delete_operator(session, id)
 

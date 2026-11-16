@@ -27,7 +27,7 @@ def database_operation(operation):
             if code == "23505" and constraint == "uq_celda_codigo":
                 raise CeldaError(409, "Ya existe una celda con ese código.") from None
             if code == "23503":
-                raise CeldaError(409, "La celda tiene registros relacionados y no se puede eliminar.") from None
+                raise CeldaError(409, "La celda tiene registros relacionados y no se puede cambiar de estado.") from None
             if code in {"23502", "23514"}:
                 raise CeldaError(422, "Los datos incumplen las restricciones de la celda.") from None
             raise CeldaError(409, "La operación entra en conflicto con los datos existentes.") from None
@@ -83,9 +83,10 @@ def update_cell(session: Session, cell_id: int, data: CeldaActualizar) -> Celda:
 
 
 @database_operation
-def delete_cell(session: Session, cell_id: int) -> None:
+def deactivate_cell(session: Session, cell_id: int) -> Celda:
     cell = find_cell(session, cell_id)
-    session.delete(cell)
-    session.commit()
+    if cell.estado != "MANTENIMIENTO":
+        return update_cell(session, cell_id, CeldaActualizar(estado="MANTENIMIENTO"))
+    return cell
 
 

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_session
@@ -36,8 +36,7 @@ def update(id: CellId, data: CeldaActualizar, session: DatabaseSession):
     return service.update_cell(session, id, data)
 
 
-@router.delete("/{id}", status_code=204)
-def delete(id: CellId, session: DatabaseSession) -> Response:
-    service.delete_cell(session, id)
-    return Response(status_code=204)
+@router.delete("/{id}", response_model=CeldaRespuesta)
+def deactivate(id: CellId, session: DatabaseSession) -> CeldaRespuesta:
+    return service.deactivate_cell(session, id)
 

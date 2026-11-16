@@ -11,9 +11,11 @@ export class OperadoresService {
   private readonly base = inject(API_BASE_URL);
   private readonly operators = `${this.base}/operadores`;
 
-  list(offset: number, limit: number) {
+  list(offset: number, limit: number, incluirInactivos = false) {
+    const params: Record<string, string | number> = { offset, limit };
+    if (incluirInactivos) params['incluir_inactivos'] = 'true';
     return this.http
-      .get<OperadoresPagina>(this.operators, { params: { offset, limit } })
+      .get<OperadoresPagina>(this.operators, { params })
       .pipe(timeout(15000));
   }
   get(id: number) {
@@ -24,8 +26,5 @@ export class OperadoresService {
   }
   update(id: number, data: OperadorActualizar) {
     return this.http.patch<Operador>(`${this.operators}/${id}`, data).pipe(timeout(15000));
-  }
-  delete(id: number) {
-    return this.http.delete<void>(`${this.operators}/${id}`).pipe(timeout(15000));
   }
 }

@@ -6,6 +6,7 @@ export interface ClienteVehiculo {
   nombre: string;
   telefono: string;
   vencimiento: string | null;
+  activo: boolean;
 }
 export interface VehiculoCrear {
   placa: string;
@@ -14,11 +15,12 @@ export interface VehiculoCrear {
   marca: string;
   tipo: TipoVehiculo;
 }
-export type VehiculoActualizar = Partial<VehiculoCrear> & { cliente_id?: number };
+export type VehiculoActualizar = Partial<VehiculoCrear> & { cliente_id?: number; activo?: boolean };
 export interface Vehiculo extends VehiculoCrear {
   id: number;
   cliente_id: number | null;
   cliente: ClienteVehiculo | null;
+  activo: boolean;
 }
 export interface VehiculosPagina {
   items: Vehiculo[];

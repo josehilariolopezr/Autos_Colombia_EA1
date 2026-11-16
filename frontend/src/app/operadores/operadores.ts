@@ -37,7 +37,8 @@ export class Operadores {
   readonly busy = computed(() => this.loading() || this.saving());
   readonly showForm = signal(false);
   readonly editing = signal<number | null>(null);
-  readonly pendingDelete = signal<Operador | null>(null);
+  readonly pendingStatus = signal<Operador | null>(null);
+  readonly includeInactive = signal(false);
   readonly listError = signal('');
   readonly actionError = signal('');
   readonly success = signal('');
@@ -53,7 +54,7 @@ export class Operadores {
     this.loading.set(true);
     this.listError.set('');
     this.api
-      .list(offset, this.limit)
+      .list(offset, this.limit, this.includeInactive())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (data) => {
@@ -78,7 +79,7 @@ export class Operadores {
     this.form.reset();
     this.editing.set(null);
     this.showForm.set(true);
-    this.pendingDelete.set(null);
+    this.pendingStatus.set(null);
     this.actionError.set('');
     this.success.set('');
   }
@@ -88,7 +89,7 @@ export class Operadores {
     this.loading.set(true);
     this.actionError.set('');
     this.success.set('');
-    this.pendingDelete.set(null);
+    this.pendingStatus.set(null);
     this.api
       .get(operator.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -109,7 +110,7 @@ export class Operadores {
   cancel(): void {
     if (this.busy()) return;
     this.showForm.set(false);
-    this.pendingDelete.set(null);
+    this.pendingStatus.set(null);
     this.actionError.set('');
   }
 
@@ -172,46 +173,50 @@ export class Operadores {
     this.form.controls[field].markAsTouched();
   }
 
-  confirmDelete(operator: Operador): void {
+  setIncludeInactive(value: boolean): void {
+    this.includeInactive.set(value);
+    this.offset.set(0);
+    this.load(0);
+  }
+
+  requestStatusChange(operator: Operador): void {
     if (this.busy()) return;
-    this.pendingDelete.set(operator);
+    this.pendingStatus.set(operator);
     this.showForm.set(false);
     this.actionError.set('');
     this.success.set('');
   }
 
-  remove(): void {
-    const operator = this.pendingDelete();
+  confirmStatusChange(): void {
+    const operator = this.pendingStatus();
     if (!operator || this.busy()) return;
     this.saving.set(true);
     this.actionError.set('');
     this.api
-      .delete(operator.id)
+      .update(operator.id, { activo: !operator.activo })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.saving.set(false);
-          this.pendingDelete.set(null);
-          this.success.set(`Operador ${operator.nombre} eliminado correctamente.`);
+          this.pendingStatus.set(null);
+          this.success.set(`Operador ${operator.nombre} ${operator.activo ? 'desactivado' : 'reactivado'}. El historial se conserva.`);
           this.load();
         },
         error: (error) => {
           this.saving.set(false);
-          this.actionError.set(this.errorMessage(error, true));
+          this.actionError.set(error.error?.detail ?? this.errorMessage(error));
           if (error.status === 404) {
-            this.pendingDelete.set(null);
+            this.pendingStatus.set(null);
             this.load();
           }
         },
       });
   }
 
-  private errorMessage(error: HttpErrorResponse, deleting = false): string {
+  private errorMessage(error: HttpErrorResponse): string {
     if (error.status === 404) return 'El operador ya no existe. Actualiza el listado.';
     if (error.status === 409)
-      return deleting
-        ? 'No se puede eliminar: el operador tiene registros relacionados o un conflicto con otros datos.'
-        : 'La operación entra en conflicto con los datos existentes.';
+      return 'La operación entra en conflicto con los datos existentes.';
     if (error.status === 422)
       return 'Revisa los datos: hay campos que no cumplen las validaciones.';
     return 'No se pudo conectar con el servicio. Comprueba la conexión y actualiza el listado antes de reintentar.';

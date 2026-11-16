@@ -62,15 +62,21 @@ class ServicioEstancia:
         operador = self.session.get(Operador, operador_id)
         if operador is None:
             raise EstanciaError(404, "Operador no encontrado.")
+        if not operador.activo:
+            raise EstanciaError(400, "El operador está inactivo y no puede registrar movimientos.")
         return operador
 
     @transaccion
     def entrada(self, data: EntradaCrear) -> EstanciaRespuesta:
         vehiculo = self._vehiculo(data.placa)
+        if not vehiculo.activo:
+            raise EstanciaError(422, "El vehículo está inactivo. Reactívalo antes de registrar el ingreso.")
         hoy = datetime.now(ZoneInfo("America/Bogota")).date()
         if vehiculo.cliente_id is None:
             raise EstanciaError(422, "El parqueadero opera exclusivamente por mensualidad vigente. Asocia un cliente con mensualidad activa antes del ingreso.")
         cliente = self.session.get(Cliente, vehiculo.cliente_id)
+        if cliente is not None and not cliente.activo:
+            raise EstanciaError(422, "El cliente asociado está inactivo. Reactívalo antes de registrar el ingreso.")
         if cliente is None or cliente.vencimiento is None or cliente.vencimiento < hoy:
             raise EstanciaError(422, "El parqueadero opera exclusivamente por mensualidad vigente. La mensualidad del vehículo está vencida o no registrada.")
         celda = self.session.scalar(select(Celda).where(Celda.id == data.celda_id).with_for_update())

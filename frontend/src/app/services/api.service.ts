@@ -19,13 +19,18 @@ export class ApiService {
   dashboardSummary() {
     return this.http.get<DashboardResumen>(`${this.base}/dashboard/resumen`).pipe(timeout(15000));
   }
-  clients(offset: number, limit: number) {
+  clients(offset: number, limit: number, incluirInactivos = false) {
+    const params: Record<string, string | number> = { offset, limit };
+    if (incluirInactivos) params['incluir_inactivos'] = 'true';
     return this.http
-      .get<ClientesPagina>(`${this.base}/clientes`, { params: { offset, limit } })
+      .get<ClientesPagina>(`${this.base}/clientes`, { params })
       .pipe(timeout(15000));
   }
   createClient(data: ClienteCrear) {
     return this.http.post<ClientesPagina['items'][number]>(`${this.base}/clientes`, data).pipe(timeout(15000));
+  }
+  setClientActive(clientId: number, activo: boolean) {
+    return this.http.patch<ClientesPagina['items'][number]>(`${this.base}/clientes/${clientId}`, { activo }).pipe(timeout(15000));
   }
   payMonthly(clientId: number, data: PagoMensualidadCrear) {
     return this.http.post<PagoMensualidad>(`${this.base}/clientes/${clientId}/mensualidades`, data).pipe(timeout(15000));
@@ -35,9 +40,11 @@ export class ApiService {
       .get<PagoMensualidad[]>(`${this.base}/clientes/${clientId}/mensualidades`, { params: { offset, limit } })
       .pipe(timeout(15000));
   }
-  list(offset: number, limit: number) {
+  list(offset: number, limit: number, incluirInactivos = false) {
+    const params: Record<string, string | number> = { offset, limit };
+    if (incluirInactivos) params['incluir_inactivos'] = 'true';
     return this.http
-      .get<VehiculosPagina>(this.vehicles, { params: { offset, limit } })
+      .get<VehiculosPagina>(this.vehicles, { params })
       .pipe(timeout(15000));
   }
   get(id: number) {
@@ -48,8 +55,5 @@ export class ApiService {
   }
   update(id: number, data: VehiculoActualizar) {
     return this.http.patch<Vehiculo>(`${this.vehicles}/${id}`, data).pipe(timeout(15000));
-  }
-  delete(id: number) {
-    return this.http.delete<void>(`${this.vehicles}/${id}`).pipe(timeout(15000));
   }
 }

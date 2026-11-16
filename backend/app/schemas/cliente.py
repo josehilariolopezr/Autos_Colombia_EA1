@@ -19,6 +19,11 @@ class ClienteCrear(BaseModel):
     placa: PlacaCliente | None = None
 
 
+class ClienteActualizar(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    activo: bool
+
+
 class ClienteEnVehiculo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,6 +32,7 @@ class ClienteEnVehiculo(BaseModel):
     nombre: str
     telefono: str
     vencimiento: date | None
+    activo: bool
 
 
 class ClienteRespuesta(ClienteEnVehiculo):

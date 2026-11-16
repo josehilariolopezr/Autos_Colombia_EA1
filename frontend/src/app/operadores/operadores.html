@@ -50,23 +50,19 @@
       </form>
     </section>
   }
-  @if (pendingDelete(); as operator) {
+  @if (pendingStatus(); as operator) {
     <section
       class="panel confirmation"
       role="alertdialog"
-      aria-labelledby="delete-title"
-      aria-describedby="delete-description"
+      aria-labelledby="status-title"
+      aria-describedby="status-description"
     >
-      <h2 id="delete-title">Eliminar operador {{ operator.nombre }}</h2>
-      <p id="delete-description">
-        ¿Quieres eliminar el operador <strong>{{ operator.nombre }}</strong
-        >, teléfono {{ operator.telefono }} (id {{ operator.id }})? Esta acción no se puede
-        deshacer.
-      </p>
+      <h2 id="status-title">{{ operator.activo ? 'Desactivar' : 'Reactivar' }} operador {{ operator.nombre }}</h2>
+      <p id="status-description">{{ operator.activo ? 'El operador dejará de estar disponible para nuevas operaciones.' : 'El operador volverá a estar disponible para las operaciones.' }} El registro y su historial se conservan en la base de datos.</p>
       <div class="actions">
-        <button type="button" (click)="cancel()" [disabled]="busy()">Cancelar eliminación</button
-        ><button type="button" class="danger" (click)="remove()" [disabled]="busy()">
-          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
+        <button type="button" (click)="pendingStatus.set(null)" [disabled]="busy()">Cancelar</button
+        ><button type="button" class="primary" (click)="confirmStatusChange()" [disabled]="busy()">
+          {{ saving() ? 'Guardando…' : 'Confirmar' }}
         </button>
       </div>
     </section>
@@ -76,7 +72,7 @@
       <h2>
         Operadores registrados <span class="count">{{ total() }}</span>
       </h2>
-      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+      <div class="actions"><label><input type="checkbox" [checked]="includeInactive()" (change)="setIncludeInactive($any($event.target).checked)" /> Mostrar inactivos</label><button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button></div>
     </div>
     @if (loading()) {
       <p class="empty" role="status">Cargando operadores…</p>
@@ -97,6 +93,7 @@
             <tr>
               <th scope="col">Nombre</th>
               <th scope="col">Teléfono</th>
+              <th scope="col">Estado</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
@@ -105,6 +102,7 @@
               <tr>
                 <th scope="row">{{ operator.nombre }}</th>
                 <td>{{ operator.telefono }}</td>
+                <td>{{ operator.activo ? 'Activo' : 'Inactivo' }}</td>
                 <td class="row-actions">
                   <button
                     type="button"
@@ -115,12 +113,11 @@
                     Editar</button
                   ><button
                     type="button"
-                    class="delete-link"
-                    (click)="confirmDelete(operator)"
+                    (click)="requestStatusChange(operator)"
                     [disabled]="busy()"
-                    [attr.aria-label]="'Eliminar ' + operator.nombre"
+                    [attr.aria-label]="(operator.activo ? 'Desactivar ' : 'Reactivar ') + operator.nombre"
                   >
-                    Eliminar
+                    {{ operator.activo ? 'Desactivar' : 'Reactivar' }}
                   </button>
                 </td>
               </tr>

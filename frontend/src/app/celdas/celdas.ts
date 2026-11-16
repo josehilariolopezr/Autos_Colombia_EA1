@@ -37,7 +37,6 @@ export class Celdas {
   readonly busy = computed(() => this.loading() || this.saving());
   readonly showForm = signal(false);
   readonly editing = signal<number | null>(null);
-  readonly pendingDelete = signal<Celda | null>(null);
   readonly listError = signal('');
   readonly actionError = signal('');
   readonly success = signal('');
@@ -78,7 +77,6 @@ export class Celdas {
     this.form.reset();
     this.editing.set(null);
     this.showForm.set(true);
-    this.pendingDelete.set(null);
     this.actionError.set('');
     this.success.set('');
   }
@@ -88,7 +86,6 @@ export class Celdas {
     this.loading.set(true);
     this.actionError.set('');
     this.success.set('');
-    this.pendingDelete.set(null);
     this.api
       .get(cell.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -109,7 +106,6 @@ export class Celdas {
   cancel(): void {
     if (this.busy()) return;
     this.showForm.set(false);
-    this.pendingDelete.set(null);
     this.actionError.set('');
   }
 
@@ -172,40 +168,6 @@ export class Celdas {
   private setFieldError(field: Field, message: string): void {
     this.form.controls[field].setErrors({ server: message });
     this.form.controls[field].markAsTouched();
-  }
-
-  confirmDelete(cell: Celda): void {
-    if (this.busy()) return;
-    this.pendingDelete.set(cell);
-    this.showForm.set(false);
-    this.actionError.set('');
-    this.success.set('');
-  }
-
-  remove(): void {
-    const cell = this.pendingDelete();
-    if (!cell || this.busy()) return;
-    this.saving.set(true);
-    this.actionError.set('');
-    this.api
-      .delete(cell.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.pendingDelete.set(null);
-          this.success.set(`Celda ${cell.codigo} eliminada correctamente.`);
-          this.load();
-        },
-        error: (error) => {
-          this.saving.set(false);
-          this.actionError.set(this.errorMessage(error, true));
-          if (error.status === 404) {
-            this.pendingDelete.set(null);
-            this.load();
-          }
-        },
-      });
   }
 
   toggleMaintenance(cell: Celda): void {

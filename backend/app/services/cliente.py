@@ -7,8 +7,8 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Cliente, Operador, PagoMensualidad, Vehiculo
-from app.schemas.cliente import ClienteCrear, ClienteRespuesta
+from app.models import Cliente, Estancia, Operador, PagoMensualidad, Vehiculo
+from app.schemas.cliente import ClienteActualizar, ClienteCrear, ClienteRespuesta
 from app.schemas.mensualidad import MensualidadPagoCrear, MensualidadPagoRespuesta
 
 
@@ -28,6 +28,8 @@ def create_client(session: Session, data: ClienteCrear) -> ClienteRespuesta:
                 )
                 if vehiculo is None:
                     raise ClienteError(404, "No existe un vehículo registrado con esa placa.")
+                if not vehiculo.activo:
+                    raise ClienteError(400, "No se puede asociar un vehículo inactivo a un cliente.")
                 if vehiculo.cliente_id is not None:
                     raise ClienteError(409, "El vehículo ya está asociado a un cliente.")
             cliente = Cliente(
@@ -51,12 +53,15 @@ def create_client(session: Session, data: ClienteCrear) -> ClienteRespuesta:
         raise ClienteError(503, "No se pudo registrar el cliente.") from None
 
 
-def list_clients(session: Session, offset: int, limit: int) -> dict:
+def list_clients(session: Session, offset: int, limit: int, incluir_inactivos: bool = False) -> dict:
     try:
-        total = session.scalar(select(func.count()).select_from(Cliente)) or 0
+        statement = select(Cliente)
+        if not incluir_inactivos:
+            statement = statement.where(Cliente.activo.is_(True))
+        total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
         items = list(
             session.scalars(
-                select(Cliente)
+                statement
                 .options(selectinload(Cliente.vehiculos))
                 .order_by(Cliente.codigo.desc())
                 .offset(offset)
@@ -67,6 +72,31 @@ def list_clients(session: Session, offset: int, limit: int) -> dict:
     except SQLAlchemyError:
         session.rollback()
         raise ClienteError(503, "No se pudo consultar el registro de clientes.") from None
+
+
+def update_client(session: Session, cliente_id: int, data: ClienteActualizar) -> ClienteRespuesta:
+    try:
+        cliente = session.scalar(select(Cliente).where(Cliente.id == cliente_id).with_for_update())
+        if cliente is None:
+            raise ClienteError(404, "Cliente no encontrado.")
+        if data.activo is False and cliente.activo:
+            open_stay = session.scalar(
+                select(Estancia.id)
+                .join(Vehiculo, Vehiculo.id == Estancia.vehiculo_id)
+                .where(Vehiculo.cliente_id == cliente.id, Estancia.salida.is_(None))
+            )
+            if open_stay is not None:
+                raise ClienteError(400, "No se puede desactivar el cliente mientras uno de sus vehículos tenga una estancia abierta.")
+        cliente.activo = data.activo
+        session.commit()
+        session.refresh(cliente)
+        return ClienteRespuesta.model_validate(cliente)
+    except ClienteError:
+        session.rollback()
+        raise
+    except SQLAlchemyError:
+        session.rollback()
+        raise ClienteError(503, "No se pudo actualizar el estado del cliente.") from None
 
 
 def _sumar_mes(value: date) -> date:
@@ -85,14 +115,20 @@ def register_monthly_payment(
             )
             if cliente is None:
                 raise ClienteError(404, "Cliente no encontrado.")
+            if not cliente.activo:
+                raise ClienteError(400, "Reactiva el cliente antes de registrar una mensualidad.")
             vehiculo = session.scalar(
                 select(Vehiculo).where(Vehiculo.cliente_id == cliente.id, Vehiculo.placa == data.placa)
             )
             if vehiculo is None:
                 raise ClienteError(409, "La placa no está asociada a este cliente.")
+            if not vehiculo.activo:
+                raise ClienteError(400, "Reactiva el vehículo antes de registrar una mensualidad.")
             operador = session.get(Operador, data.operador_id)
             if operador is None:
                 raise ClienteError(404, "Operador no encontrado.")
+            if not operador.activo:
+                raise ClienteError(400, "El operador está inactivo y no puede registrar pagos.")
             hoy = datetime.now(ZoneInfo("America/Bogota")).date()
             inicio = max(cliente.vencimiento, hoy) if cliente.vencimiento else hoy
             fin = _sumar_mes(inicio)

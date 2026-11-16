@@ -36,6 +36,7 @@ class VehiculoActualizar(BaseModel):
     marca: Texto | None = None
     tipo: TipoVehiculo | None = None
     cliente_id: Identificador | None = None
+    activo: bool | None = None
 
     @field_validator("*", mode="before")
     @classmethod
@@ -48,6 +49,7 @@ class VehiculoActualizar(BaseModel):
 class VehiculoRespuesta(VehiculoCrear):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: int
+    activo: bool
     cliente: ClienteEnVehiculo | None = None
 
 

@@ -43,7 +43,7 @@ def get_dashboard_summary(session: Session) -> DashboardResumen:
             )
         ) or 0
         monthly_active = session.scalar(
-            select(func.count(Cliente.id)).where(Cliente.vencimiento >= hoy)
+            select(func.count(Cliente.id)).where(Cliente.activo.is_(True), Cliente.vencimiento >= hoy)
         ) or 0
         revenue_today = session.scalar(
             select(func.coalesce(func.sum(PagoMensualidad.valor), 0)).where(

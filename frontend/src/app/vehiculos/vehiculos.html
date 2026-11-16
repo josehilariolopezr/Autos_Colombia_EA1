@@ -82,23 +82,19 @@
     </section>
   }
 
-  @if (pendingDelete(); as vehicle) {
+  @if (pendingStatus(); as vehicle) {
     <section
       class="panel confirmation"
       role="alertdialog"
-      aria-labelledby="delete-title"
-      aria-describedby="delete-description"
+      aria-labelledby="status-title"
+      aria-describedby="status-description"
     >
-      <h2 id="delete-title">Eliminar vehículo {{ vehicle.placa }}</h2>
-      <p id="delete-description">
-        ¿Quieres eliminar {{ vehicle.marca }} {{ vehicle.modelo }}, placa
-        <strong>{{ vehicle.placa }}</strong
-        >? Esta acción no se puede deshacer.
-      </p>
+      <h2 id="status-title">{{ vehicle.activo ? 'Desactivar' : 'Reactivar' }} vehículo {{ vehicle.placa }}</h2>
+      <p id="status-description">{{ vehicle.activo ? 'El vehículo dejará de estar disponible para nuevos ingresos y pagos.' : 'El vehículo volverá a estar disponible para la operación.' }} El registro y su historial se conservan en la base de datos.</p>
       <div class="actions">
-        <button type="button" (click)="cancel()" [disabled]="busy()">Cancelar eliminación</button
-        ><button class="danger" type="button" (click)="remove()" [disabled]="busy()">
-          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
+        <button type="button" (click)="pendingStatus.set(null)" [disabled]="busy()">Cancelar</button
+        ><button class="primary" type="button" (click)="confirmStatusChange()" [disabled]="busy()">
+          {{ saving() ? 'Guardando…' : 'Confirmar' }}
         </button>
       </div>
     </section>
@@ -109,7 +105,7 @@
       <h2>
         Vehículos registrados <span class="count">{{ total() }}</span>
       </h2>
-      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+      <div class="actions"><label><input type="checkbox" [checked]="includeInactive()" (change)="setIncludeInactive($any($event.target).checked)" /> Mostrar inactivos</label><button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button></div>
     </div>
     @if (loading()) {
       <p class="empty" role="status">Cargando vehículos…</p>
@@ -140,6 +136,7 @@
               <th scope="col">Año</th>
               <th scope="col">Color</th>
               <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
               <th scope="col">Acciones</th>
             </tr>
           </thead>
@@ -153,6 +150,7 @@
                 <td>
                   <span class="type-tag">{{ vehicle.tipo }}</span>
                 </td>
+                <td>{{ vehicle.activo ? 'Activo' : 'Inactivo' }}</td>
                 <td class="row-actions">
                   <button
                     type="button"
@@ -163,12 +161,11 @@
                     Editar</button
                   ><button
                     type="button"
-                    class="delete-link"
-                    (click)="confirmDelete(vehicle)"
+                    (click)="requestStatusChange(vehicle)"
                     [disabled]="busy()"
-                    [attr.aria-label]="'Eliminar ' + vehicle.placa"
+                    [attr.aria-label]="(vehicle.activo ? 'Desactivar ' : 'Reactivar ') + vehicle.placa"
                   >
-                    Eliminar
+                    {{ vehicle.activo ? 'Desactivar' : 'Reactivar' }}
                   </button>
                 </td>
               </tr>

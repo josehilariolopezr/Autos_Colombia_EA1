@@ -24,7 +24,7 @@ def database_operation(operation):
             session.rollback()
             code = getattr(error.orig, "sqlstate", None)
             if code == "23503":
-                raise OperadorError(409, "El operador tiene registros relacionados y no se puede eliminar.") from None
+                raise OperadorError(409, "El operador tiene registros relacionados y no se puede desactivar.") from None
             if code in {"23502", "23514"}:
                 raise OperadorError(422, "Los datos incumplen las restricciones del operador.") from None
             raise OperadorError(409, "La operación entra en conflicto con los datos existentes.") from None
@@ -51,9 +51,12 @@ def create_operator(session: Session, data: OperadorCrear) -> Operador:
 
 
 @database_operation
-def list_operators(session: Session, offset: int, limit: int) -> dict:
-    total = session.scalar(select(func.count()).select_from(Operador))
-    items = list(session.scalars(select(Operador).order_by(Operador.id).offset(offset).limit(limit)))
+def list_operators(session: Session, offset: int, limit: int, incluir_inactivos: bool = False) -> dict:
+    statement = select(Operador)
+    if not incluir_inactivos:
+        statement = statement.where(Operador.activo.is_(True))
+    total = session.scalar(select(func.count()).select_from(statement.subquery())) or 0
+    items = list(session.scalars(statement.order_by(Operador.id).offset(offset).limit(limit)))
     return {"items": items, "total": total, "offset": offset, "limit": limit}
 
 
@@ -73,9 +76,7 @@ def update_operator(session: Session, operator_id: int, data: OperadorActualizar
 
 
 @database_operation
-def delete_operator(session: Session, operator_id: int) -> None:
-    operator = find_operator(session, operator_id)
-    session.delete(operator)
-    session.commit()
+def delete_operator(session: Session, operator_id: int) -> Operador:
+    return update_operator(session, operator_id, OperadorActualizar(activo=False))
 
 

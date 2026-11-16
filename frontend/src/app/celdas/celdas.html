@@ -48,26 +48,6 @@
       </form>
     </section>
   }
-  @if (pendingDelete(); as cell) {
-    <section
-      class="panel confirmation"
-      role="alertdialog"
-      aria-labelledby="delete-title"
-      aria-describedby="delete-description"
-    >
-      <h2 id="delete-title">Eliminar celda {{ cell.codigo }}</h2>
-      <p id="delete-description">
-        ¿Quieres eliminar la celda <strong>{{ cell.codigo }}</strong
-        >, de tipo {{ cell.tipo }}? Esta acción no se puede deshacer.
-      </p>
-      <div class="actions">
-        <button type="button" (click)="cancel()" [disabled]="busy()">Cancelar eliminación</button
-        ><button type="button" class="danger" (click)="remove()" [disabled]="busy()">
-          {{ saving() ? 'Eliminando…' : 'Confirmar eliminación' }}
-        </button>
-      </div>
-    </section>
-  }
   <section class="panel list" aria-label="Listado de celdas" [attr.aria-busy]="loading()">
     <div class="list-heading">
       <h2>
@@ -114,16 +94,7 @@
                     [disabled]="busy()"
                     [attr.aria-label]="'Editar ' + cell.codigo"
                   >
-                    Editar</button
-                  ><button
-                    type="button"
-                    class="delete-link"
-                    (click)="confirmDelete(cell)"
-                    [disabled]="busy()"
-                    [attr.aria-label]="'Eliminar ' + cell.codigo"
-                  >
-                    Eliminar
-                  </button>
+                    Editar</button>
                 </td>
               </tr>
             }

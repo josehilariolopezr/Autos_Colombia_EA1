@@ -59,6 +59,8 @@ def create_novedad(data: NovedadCreate, session: DatabaseSession) -> NovedadOut:
         operator = session.get(Operador, data.operador_id)
         if operator is None:
             raise HTTPException(404, "Operador no encontrado.")
+        if not operator.activo:
+            raise HTTPException(400, "El operador está inactivo y no puede registrar novedades.")
         stay = None
         if data.estancia_id is not None:
             stay = session.get(Estancia, data.estancia_id)

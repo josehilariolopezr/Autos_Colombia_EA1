@@ -27,6 +27,9 @@ export class Clientes {
   protected readonly createError = signal('');
   protected readonly createSuccess = signal('');
   protected readonly actionSuccess = signal('');
+  protected readonly includeInactive = signal(false);
+  protected readonly pendingClientStatus = signal<Cliente | null>(null);
+  protected readonly statusBusy = signal(false);
   protected readonly associationClient = signal<Cliente | null>(null);
   protected readonly availableVehicles = signal<import('../models/vehiculo').Vehiculo[]>([]);
   protected readonly selectedVehicleId = signal<number | null>(null);
@@ -74,7 +77,7 @@ export class Clientes {
   protected load(): void {
     this.loading.set(true);
     this.loadError.set('');
-    this.api.clients(0, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.clients(0, 100, this.includeInactive()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (page) => { this.clients.set(page.items); this.loading.set(false); },
       error: () => { this.loadError.set('No pudimos cargar los clientes desde la API.'); this.loading.set(false); },
     });
@@ -141,6 +144,31 @@ export class Clientes {
   }
 
   protected search(value: string): void { this.query.set(value); this.page.set(1); }
+  protected setIncludeInactive(value: boolean): void {
+    this.includeInactive.set(value);
+    this.page.set(1);
+    this.load();
+  }
+  protected requestClientStatus(client: Cliente): void { this.pendingClientStatus.set(client); }
+  protected confirmClientStatus(): void {
+    const client = this.pendingClientStatus();
+    if (!client || this.statusBusy()) return;
+    const activo = !client.activo;
+    this.statusBusy.set(true);
+    this.api.setClientActive(client.id, activo).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.statusBusy.set(false);
+        this.pendingClientStatus.set(null);
+        this.actionSuccess.set(`Cliente ${client.nombre} ${activo ? 'reactivado' : 'desactivado'}. El historial se conserva.`);
+        this.load();
+      },
+      error: (error: { error?: { detail?: string } }) => {
+        this.statusBusy.set(false);
+        this.actionSuccess.set(error.error?.detail ?? 'No se pudo cambiar el estado del cliente.');
+        this.pendingClientStatus.set(null);
+      },
+    });
+  }
   protected initials(name: string): string { return name.split(/\s+/).slice(0, 2).map((part) => part[0] ?? '').join('').toUpperCase(); }
   protected dueDate(value: string | null): string {
     return value ? new Intl.DateTimeFormat('es-CO', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'America/Bogota' }).format(new Date(`${value}T12:00:00`)) : '—';

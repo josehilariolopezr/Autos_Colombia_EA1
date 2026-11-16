@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, timezone
 
-from sqlalchemy import BigInteger, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, Integer, Text, UniqueConstraint, func, text
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, ForeignKey, Identity, Index, Integer, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, validates
 
 
@@ -35,6 +35,7 @@ class Vehiculo(Base):
     modelo: Mapped[int] = mapped_column(Integer, nullable=False)
     marca: Mapped[str] = mapped_column(Text, nullable=False)
     tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
     cliente_id: Mapped[int | None] = mapped_column(
         BigInteger, ForeignKey("cliente.id", name="fk_vehiculo_cliente", ondelete="SET NULL"), nullable=True
     )
@@ -87,6 +88,7 @@ class Operador(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     nombre: Mapped[str] = mapped_column(Text, nullable=False)
     telefono: Mapped[str] = mapped_column(Text, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
 
     @validates("nombre", "telefono")
     def validate_text(self, key: str, value: str) -> str:
@@ -107,6 +109,7 @@ class Cliente(Base):
     nombre: Mapped[str] = mapped_column(Text, nullable=False)
     telefono: Mapped[str] = mapped_column(Text, nullable=False)
     vencimiento: Mapped[date | None] = mapped_column(Date, nullable=True)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
     vehiculos: Mapped[list[Vehiculo]] = relationship(back_populates="cliente")
     pagos_mensualidad: Mapped[list["PagoMensualidad"]] = relationship(back_populates="cliente")
 

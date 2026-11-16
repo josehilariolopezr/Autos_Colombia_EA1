@@ -17,6 +17,7 @@ class OperadorActualizar(BaseModel):
     model_config = ConfigDict(extra="forbid")
     nombre: Texto | None = None
     telefono: Texto | None = None
+    activo: bool | None = None
 
     @field_validator("*", mode="before")
     @classmethod
@@ -29,6 +30,7 @@ class OperadorActualizar(BaseModel):
 class OperadorRespuesta(OperadorCrear):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: int
+    activo: bool
 
 
 class OperadoresPagina(BaseModel):
